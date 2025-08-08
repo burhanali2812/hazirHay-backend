@@ -35,13 +35,12 @@ router.post("/saveUser", async (req, res) => {
       email,
       password: hashPassword,
       phone,
-      address,
-      role
+      address
     });
     await account.save();
     res
       .status(200)
-      .json({ success: true, message: "Admin Created Successfully" });
+      .json({ success: true, message: `${roleData.label} Created Successfully` });
   } catch (error) {
     console.error("Error saving admin:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
