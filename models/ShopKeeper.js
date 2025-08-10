@@ -7,6 +7,7 @@ const shopKeeperSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, required: true },
   address: { type: String, required: true },
+   profilePicture:{type:String, required : true},
   isVerified: { type: Boolean, default : false },
 });
 
