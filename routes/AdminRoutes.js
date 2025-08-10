@@ -73,6 +73,12 @@ router.post(
   async (req, res) => {
     const id = req.params.id; 
     const { shopName, shopAddress, license } = req.body;
+    const licenseExist = await ShopDetails.findOne({license});
+    if(licenseExist){
+       return res
+        .status(400)
+        .json({ success: false, message: "Already shop exist on this license" });
+    }
 
     try {
       const shop = new ShopDetails({
