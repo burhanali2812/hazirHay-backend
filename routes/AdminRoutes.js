@@ -9,7 +9,8 @@ const JWT_SECRET = process.env.JWT_SECRET
 const authMiddleWare = require("../authMiddleWare")
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("../cloudinaryConfig")
+const cloudinary = require("../cloudinaryConfig");
+const ShopDetails = require("../models/ShopDetails");
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -57,13 +58,48 @@ router.post("/saveUser",upload.single("profilePicture"), async (req, res) => {
     await account.save();
     res
       .status(200)
-      .json({ success: true, message: `${roleData.label} Created Successfully` });
+      .json({ success: true, message: `${roleData.label} Created Successfully`, user : {id: account._id} });
   }  catch (error) {
   console.error("Error saving user:", error.message, error.stack);
   res.status(500).json({ success: false, message: error.message });
 }
 
 });
+
+router.post(
+  "/shopInformation/:id",
+  upload.single("shopPicture"),
+
+  async (req, res) => {
+    const id = req.params.id; 
+    const { shopName, shopAddress, license } = req.body;
+
+    try {
+      const shop = new ShopDetails({
+        owner: id,
+        shopName,
+        shopAddress,
+        license,
+        shopPicture: req.file?.path || ""
+      });
+
+      await shop.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Shop information stored successfully",
+        data: shop
+      });
+    } catch (error) {
+      console.error("Error storing shop info:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to store shop information",
+        error: error.message
+      });
+    }
+  }
+);
 
 
 
