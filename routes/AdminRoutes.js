@@ -6,13 +6,29 @@ const jwt = require("jsonwebtoken")
 const ShopKeeper = require("../models/ShopKeeper");
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET 
+const authMiddleWare = require("../authMiddleWare")
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../cloudinaryConfig")
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "profile_pictures",
+    allowed_formats: ["jpg", "png", "jpeg"],
+  },
+});
+
+const upload = multer({ storage });
+
+
 
 const roleModelMap = {
   admin: { model: Admin, label: "Admin" },
   user: { model: User, label: "User" },
   shopKepper: { model: ShopKeeper, label: "ShopKepper" },
 };
-router.post("/saveUser", async (req, res) => {
+router.post("/saveUser",upload.single("profilePicture"), async (req, res) => {
   try {
     const { name, email, password, phone, address, role} = req.body;
     const roleData = roleModelMap[role]
@@ -35,16 +51,18 @@ router.post("/saveUser", async (req, res) => {
       email,
       password: hashPassword,
       phone,
-      address
+      address,
+      profilePicture: req.file?.path || ""
     });
     await account.save();
     res
       .status(200)
       .json({ success: true, message: `${roleData.label} Created Successfully` });
-  } catch (error) {
-    console.error("Error saving admin:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
+  }  catch (error) {
+  console.error("Error saving user:", error.message, error.stack);
+  res.status(500).json({ success: false, message: error.message });
+}
+
 });
 
 
