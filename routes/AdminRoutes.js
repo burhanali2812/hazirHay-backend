@@ -115,7 +115,7 @@ router.post(
 
       await shop.save();
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "Shop information stored successfully",
         data: shop
