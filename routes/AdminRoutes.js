@@ -74,7 +74,23 @@ router.post(
 
   async (req, res) => {
     const id = req.params.id; 
-    const { shopName, shopAddress, license } = req.body;
+    let { shopName, shopAddress, license , coordinates, area, services} = req.body;
+
+      if (typeof coordinates === "string") {
+      try {
+        coordinates = JSON.parse(coordinates);
+      } catch (err) {
+        return res.status(400).json({ success: false, message: "Invalid coordinates format" });
+      }
+    }
+
+    if (typeof services === "string") {
+      try {
+        services = JSON.parse(services);
+      } catch (err) {
+        return res.status(400).json({ success: false, message: "Invalid services format" });
+      }
+    }
     const licenseExist = await ShopDetails.findOne({license});
     if(licenseExist){
        return res
@@ -88,7 +104,13 @@ router.post(
         shopName,
         shopAddress,
         license,
-        shopPicture: req.file?.path || ""
+        shopPicture: req.file?.path || "",
+        location : {
+          type: "Point",         
+          coordinates : coordinates,
+          area : area
+        },
+        servicesOffered : services
       });
 
       await shop.save();
@@ -161,24 +183,21 @@ router.get("/reverse-geocode", async (req, res) => {
     const { lat, lon } = req.query;
     console.log("Incoming coordinates:", lat, lon);
 
-    // Check for missing coordinates
     if (!lat || !lon) {
       return res.status(400).json({ error: "Latitude and longitude are required" });
     }
 
     const nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
 
-    // Call Nominatim with required headers
     const result = await axios.get(nominatimUrl, {
       params: { lat, lon, format: "json" },
       headers: {
         "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
         "Accept-Language": "en"
       },
-      timeout: 5000 // 5 seconds max
+      timeout: 5000 
     });
 
-    // If no address found
     if (!result.data.address) {
       return res.status(404).json({ error: "No address found for given coordinates" });
     }
@@ -188,7 +207,6 @@ router.get("/reverse-geocode", async (req, res) => {
   } catch (err) {
     console.error("Error calling Nominatim:", err.response?.data || err.message);
 
-    // Rate limit handling
     if (err.response?.status === 429) {
       return res.status(429).json({ error: "Rate limit reached. Try again later." });
     }

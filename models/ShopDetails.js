@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String},
   date: { type: Date, default: Date.now },
-  msg: { type: String, required: true },
+  msg: { type: String },
 });
 
 const serviceSchema = new mongoose.Schema({
@@ -11,10 +11,7 @@ const serviceSchema = new mongoose.Schema({
   subCategory: { type: String, required: true },
 });
 
-const workingHoursSchema = new mongoose.Schema({
-  startTime: { type: String, required: true }, 
-  endTime: { type: String, required: true },
-});
+
 
 const shopDetailSchema = new mongoose.Schema({
   owner: {
@@ -39,15 +36,14 @@ const shopDetailSchema = new mongoose.Schema({
     },
 
     area :{
-      type: String
+      type: String,
+      required : true
     }
   },
 
   servicesOffered: [serviceSchema], 
 
   status: { type: String, default: "pending" },
-
-  workingHours: workingHoursSchema,
 
   reviews: [reviewSchema],
 });
