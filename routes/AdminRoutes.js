@@ -154,7 +154,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/admin/reverse-geocode", async (req, res) => {
+router.get("/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
 
