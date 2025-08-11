@@ -154,17 +154,31 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/reverse-geocode", async (req, res) => {
+router.get("/admin/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
+
+    if (!lat || !lon) {
+      return res.status(400).json({ error: "Latitude and longitude are required" });
+    }
+
     const result = await axios.get("https://nominatim.openstreetmap.org/reverse", {
       params: { lat, lon, format: "json" },
-      headers: { "User-Agent": "HazirHayApp/1.0 (syedburhanali2812@gmail.com)" }
+      headers: { 
+        "User-Agent": "HazirHayApp/1.0 (syedburhanali2812@gmail.com)",
+        "Accept-Language": "en" // optional
+      }
     });
+
     res.json(result.data);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch location" });
+    console.error("Error calling Nominatim:", err.response?.data || err.message);
+    res.status(500).json({ 
+      error: "Failed to fetch location",
+      details: err.response?.data || err.message
+    });
   }
 });
+
 
 module.exports = router;
