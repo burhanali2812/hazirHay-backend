@@ -157,23 +157,41 @@ router.post("/", async (req, res) => {
 router.get("/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
+    console.log("Incoming coordinates:", lat, lon);
 
+    // Check for missing coordinates
     if (!lat || !lon) {
       return res.status(400).json({ error: "Latitude and longitude are required" });
     }
 
-    const result = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+    const nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
+
+    // Call Nominatim with required headers
+    const result = await axios.get(nominatimUrl, {
       params: { lat, lon, format: "json" },
-      headers: { 
-        "User-Agent": "HazirHayApp/1.0 (syedburhanali2812@gmail.com)",
-        "Accept-Language": "en" // optional
-      }
+      headers: {
+        "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
+        "Accept-Language": "en"
+      },
+      timeout: 5000 // 5 seconds max
     });
 
+    // If no address found
+    if (!result.data.address) {
+      return res.status(404).json({ error: "No address found for given coordinates" });
+    }
+
     res.json(result.data);
+
   } catch (err) {
     console.error("Error calling Nominatim:", err.response?.data || err.message);
-    res.status(500).json({ 
+
+    // Rate limit handling
+    if (err.response?.status === 429) {
+      return res.status(429).json({ error: "Rate limit reached. Try again later." });
+    }
+
+    res.status(500).json({
       error: "Failed to fetch location",
       details: err.response?.data || err.message
     });
