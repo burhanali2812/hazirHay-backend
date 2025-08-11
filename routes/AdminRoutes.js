@@ -154,4 +154,17 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/reverse-geocode", async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    const result = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      params: { lat, lon, format: "json" },
+      headers: { "User-Agent": "HazirHayApp/1.0 (syedburhanali2812@gmail.com)" }
+    });
+    res.json(result.data);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch location" });
+  }
+});
+
 module.exports = router;
