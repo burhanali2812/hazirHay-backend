@@ -31,45 +31,64 @@ const roleModelMap = {
   user: { model: User, label: "User" },
   shopKepper: { model: ShopKeeper, label: "ShopKepper" },
 };
-router.post("/saveUser",upload.single("profilePicture"), async (req, res) => {
-  try {
-    const { name, email, password, phone, address, role} = req.body;
-    const roleData = roleModelMap[role]
-     if (!roleData) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid role provided" });
-    }
-    const alreadyExist = await roleData.model.findOne({ email });
-    if (alreadyExist) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email Already Registered" });
-    }
-    const genSalt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(password, genSalt);
+router.post(
+  "/saveUser",
+  upload.fields([
+    { name: "profilePicture" },
+    { name: "verificationDocument" },
+  ]),
+  async (req, res) => {
+    try {
+      const { name, email, password, phone, cnic, address, role } = req.body;
 
-    const account = new  roleData.model({
-      name,
-      email,
-      password: hashPassword,
-      phone,
-      address,
-      profilePicture: req.file?.path || ""
-    });
-    await account.save();
-    res
-      .status(200)
-      .json({ success: true, message: `${roleData.label} Created Successfully`, user : {id: account._id} });
-  }  catch (error) {
-  console.error("Error saving user:", error.message, error.stack);
-  res.status(500).json({ success: false, message: error.message });
-}
+      const roleData = roleModelMap[role];
+      if (!roleData) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid role provided" });
+      }
 
-});
+      const alreadyExist = await roleData.model.findOne({ email });
+      if (alreadyExist) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Email Already Registered" });
+      }
+
+      const genSalt = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(password, genSalt);
+
+      const account = new roleData.model({
+        name,
+        email,
+        password: hashPassword,
+        phone,
+        address,
+        profilePicture: req.files?.profilePicture?.[0]?.path || "",
+        ...(role === "shopKepper" && { 
+          cnic, 
+          verificationDocument: req.files?.verificationDocument?.[0]?.path || ""
+        }),
+      });
+
+      await account.save();
+
+      res.status(200).json({
+        success: true,
+        message: `${roleData.label} Created Successfully`,
+        user: { id: account._id },
+      });
+    } catch (error) {
+      console.error("Error saving user:", error.message, error.stack);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 
 router.post(
   "/shopInformation/:id",
+  
   upload.single("shopPicture"),
 
   async (req, res) => {
