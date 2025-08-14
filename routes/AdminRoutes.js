@@ -282,7 +282,7 @@ router.put("/shopKepper/:id",async (req, res) => {
 });
 
 
-router.get("/allShopkepper", authMiddleWare, async (req, res) => {
+router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
   try {
     const shopKeppers = await ShopKepper.find({ isShop: true}).lean().sort({createdAt : -1});
 
