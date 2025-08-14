@@ -46,6 +46,7 @@ const shopDetailSchema = new mongoose.Schema({
   status: { type: String, default: "pending" },
 
   reviews: [reviewSchema],
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("ShopDetail", shopDetailSchema);
