@@ -271,16 +271,22 @@ router.get("/reverse-geocode", async (req, res) => {
   }
 });
 
-router.delete("/delete/:id",async(req,res)=>{
+router.delete("/delete/:id", async (req, res) => {
   const { id } = req.params;
-  try {
-    const delet = await ShopDetails.findByIdAndDelete({id});
-    res.status(200).json({message: "Deleted Successfully", delet})
 
+  try {
+    const deletedShop = await ShopDetails.findByIdAndDelete(id);
+
+    if (!deletedShop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.status(200).json({ message: "Deleted Successfully" });
   } catch (error) {
-    res.status(500).json({message: error || "Unable to delete"})
+    res.status(500).json({ message: error.message || "Unable to delete" });
   }
-})
+});
+
 
 router.put("/shopKepper/:id", async (req, res) => {
   try {
