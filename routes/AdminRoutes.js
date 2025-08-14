@@ -284,7 +284,7 @@ router.put("/shopKepper/:id",async (req, res) => {
 
 router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
   try {
-    const shopKeppers = await ShopKepper.find({ isShop: true}).lean().sort({createdAt : -1});
+    const shopKeppers = await ShopKepper.find({ isShop: true , isVerified : false}).lean().sort({createdAt : -1});
 
     const shopWithShopKepper = await Promise.all(
       shopKeppers.map(async(kepper)=>{
