@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Admin = require("../models/Admin");
 const jwt = require("jsonwebtoken")
-const ShopKeeper = require("../models/ShopKeeper");
+const ShopKepper = require("../models/ShopKeeper");
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET 
 const authMiddleWare = require("../authMiddleWare")
@@ -29,7 +29,7 @@ const upload = multer({ storage });
 const roleModelMap = {
   admin: { model: Admin, label: "Admin" },
   user: { model: User, label: "User" },
-  shopKepper: { model: ShopKeeper, label: "ShopKepper" },
+  shopKepper: { model: ShopKepper, label: "ShopKepper" },
 };
 router.post(
   "/saveUser",
@@ -131,6 +131,16 @@ router.post(
         },
         servicesOffered : services
       });
+
+      const shopKepper = await ShopKepper.findByIdAndUpdate(
+         id,
+        { isShop: true },
+        { new: true }
+      )
+
+        if (!shopKepper) {
+        return res.status(404).json({ success: false, message: "Shopkeeper not found" });
+      }
 
       await shop.save();
 
@@ -236,6 +246,70 @@ router.get("/reverse-geocode", async (req, res) => {
     });
   }
 });
+
+router.put("/shopKepper/:id",async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+      const shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isVerified: true },
+        { new: true }
+      );
+  
+
+    if (!shopKepper) {
+      return res.status(404).json({
+        success: false,
+        message: "Shopkeeper not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Shopkeeper updated successfully",
+      data: shopKepper,
+    });
+
+  } catch (error) {
+    console.error("Error updating shopkeeper:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+});
+
+
+router.get("/allShopkepper", authMiddleWare, async (req, res) => {
+  try {
+    const shopKeppers = await ShopKepper.find({ isShop: true}).lean().sort({createdAt : -1});
+
+    const shopWithShopKepper = await Promise.all(
+      shopKeppers.map(async(kepper)=>{
+        const shop = await ShopDetails.findOne({owner : kepper._id}).lean();
+        if (!shop) return null; 
+        return {...kepper, shop}
+      })
+    )
+    res.status(200).json({
+      success: true,
+      message: "Shopkeepers with shops details fetched successfully",
+      data: shopWithShopKepper
+    });
+    
+  } catch (error) {
+    console.error("Error fetching shopkeepers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message
+    });
+  }
+});
+
+
 
 
 module.exports = router;
