@@ -275,7 +275,7 @@ router.delete("/delete/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deletedShop = await ShopDetails.findByIdAndDelete(id);
+    const deletedShop = await ShopKepper.findByIdAndDelete(id);
 
     if (!deletedShop) {
       return res.status(404).json({ message: "Shop not found" });
