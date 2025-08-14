@@ -2,17 +2,16 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Admin = require("../models/Admin");
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 const ShopKepper = require("../models/ShopKeeper");
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET 
-const authMiddleWare = require("../authMiddleWare")
+const JWT_SECRET = process.env.JWT_SECRET;
+const authMiddleWare = require("../authMiddleWare");
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const ShopDetails = require("../models/ShopDetails");
 const axios = require("axios");
-
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -24,8 +23,6 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-
-
 const roleModelMap = {
   admin: { model: Admin, label: "Admin" },
   user: { model: User, label: "User" },
@@ -33,10 +30,7 @@ const roleModelMap = {
 };
 router.post(
   "/saveUser",
-  upload.fields([
-    { name: "profilePicture" },
-    { name: "verificationDocument" },
-  ]),
+  upload.fields([{ name: "profilePicture" }, { name: "verificationDocument" }]),
   async (req, res) => {
     try {
       const { name, email, password, phone, cnic, address, role } = req.body;
@@ -65,9 +59,10 @@ router.post(
         phone,
         address,
         profilePicture: req.files?.profilePicture?.[0]?.path || "",
-        ...(role === "shopKepper" && { 
-          cnic, 
-          verificationDocument: req.files?.verificationDocument?.[0]?.path || ""
+        ...(role === "shopKepper" && {
+          cnic,
+          verificationDocument:
+            req.files?.verificationDocument?.[0]?.path || "",
         }),
       });
 
@@ -85,21 +80,23 @@ router.post(
   }
 );
 
-
 router.post(
   "/shopInformation/:id",
-  
+
   upload.single("shopPicture"),
 
   async (req, res) => {
-    const id = req.params.id; 
-    let { shopName, shopAddress, license , coordinates, area, services} = req.body;
+    const id = req.params.id;
+    let { shopName, shopAddress, license, coordinates, area, services } =
+      req.body;
 
-      if (typeof coordinates === "string") {
+    if (typeof coordinates === "string") {
       try {
         coordinates = JSON.parse(coordinates);
       } catch (err) {
-        return res.status(400).json({ success: false, message: "Invalid coordinates format" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid coordinates format" });
       }
     }
 
@@ -107,14 +104,19 @@ router.post(
       try {
         services = JSON.parse(services);
       } catch (err) {
-        return res.status(400).json({ success: false, message: "Invalid services format" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid services format" });
       }
     }
-    const licenseExist = await ShopDetails.findOne({license});
-    if(licenseExist){
-       return res
+    const licenseExist = await ShopDetails.findOne({ license });
+    if (licenseExist) {
+      return res
         .status(400)
-        .json({ success: false, message: "Already shop exist on this license" });
+        .json({
+          success: false,
+          message: "Already shop exist on this license",
+        });
     }
 
     try {
@@ -124,43 +126,48 @@ router.post(
         shopAddress,
         license,
         shopPicture: req.file?.path || "",
-        location : {
-          type: "Point",         
-          coordinates : coordinates,
-          area : area
+        location: {
+          type: "Point",
+          coordinates: coordinates,
+          area: area,
         },
-        servicesOffered : services
+        servicesOffered: services,
       });
 
-      const shopKepper = await ShopKepper.findByIdAndUpdate(
-         id,
-        { isShop: true },
-        { new: true }
-      )
-
-        if (!shopKepper) {
-        return res.status(404).json({ success: false, message: "Shopkeeper not found" });
+      const savedShop = await shop.save();
+      if (!savedShop) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to store shop" });
       }
 
-      await shop.save();
+      const shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isShop: true },
+        { new: true }
+      );
+
+      if (!shopKepper) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Shopkeeper not found" });
+      }
 
       res.status(200).json({
         success: true,
         message: "Shop information stored successfully",
-        data: shop
+        data: shop,
       });
     } catch (error) {
       console.error("Error storing shop info:", error);
       res.status(500).json({
         success: false,
         message: "Failed to store shop information",
-        error: error.message
+        error: error.message,
       });
     }
   }
 );
-
-
 
 router.post("/", async (req, res) => {
   try {
@@ -190,15 +197,24 @@ router.post("/", async (req, res) => {
         .json({ success: false, message: "Invalid password" });
     }
 
-    const token = jwt.sign({
+    const token = jwt.sign(
+      {
         id: account._id,
-        email : account.email,
-        role: account.role
-    }, JWT_SECRET, {expiresIn : "1d"})
+        email: account.email,
+        role: account.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     return res
       .status(200)
-      .json({ success: true, message: `${label} logged in successfully!` , token , user :{id: account._id}});
+      .json({
+        success: true,
+        message: `${label} logged in successfully!`,
+        token,
+        user: { id: account._id },
+      });
   } catch (error) {
     console.error(error);
     return res
@@ -213,7 +229,9 @@ router.get("/reverse-geocode", async (req, res) => {
     console.log("Incoming coordinates:", lat, lon);
 
     if (!lat || !lon) {
-      return res.status(400).json({ error: "Latitude and longitude are required" });
+      return res
+        .status(400)
+        .json({ error: "Latitude and longitude are required" });
     }
 
     const nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
@@ -222,41 +240,57 @@ router.get("/reverse-geocode", async (req, res) => {
       params: { lat, lon, format: "json" },
       headers: {
         "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
-        "Accept-Language": "en"
+        "Accept-Language": "en",
       },
-      timeout: 5000 
+      timeout: 5000,
     });
 
     if (!result.data.address) {
-      return res.status(404).json({ error: "No address found for given coordinates" });
+      return res
+        .status(404)
+        .json({ error: "No address found for given coordinates" });
     }
 
     res.json(result.data);
-
   } catch (err) {
-    console.error("Error calling Nominatim:", err.response?.data || err.message);
+    console.error(
+      "Error calling Nominatim:",
+      err.response?.data || err.message
+    );
 
     if (err.response?.status === 429) {
-      return res.status(429).json({ error: "Rate limit reached. Try again later." });
+      return res
+        .status(429)
+        .json({ error: "Rate limit reached. Try again later." });
     }
 
     res.status(500).json({
       error: "Failed to fetch location",
-      details: err.response?.data || err.message
+      details: err.response?.data || err.message,
     });
   }
 });
 
-router.put("/shopKepper/:id",async (req, res) => {
+router.delete("/delete/:id",async(req,res)=>{
+  const { id } = req.params;
+  try {
+    const delet = await ShopDetails.findByIdAndDelete({id});
+    res.status(200).json({message: "Deleted Successfully", delet})
+
+  } catch (error) {
+    res.status(500).json({message: error || "Unable to delete"})
+  }
+})
+
+router.put("/shopKepper/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
-      const shopKepper = await ShopKepper.findByIdAndUpdate(
-        id,
-        { isVerified: true },
-        { new: true }
-      );
-  
+
+    const shopKepper = await ShopKepper.findByIdAndUpdate(
+      id,
+      { isVerified: true },
+      { new: true }
+    );
 
     if (!shopKepper) {
       return res.status(404).json({
@@ -270,7 +304,6 @@ router.put("/shopKepper/:id",async (req, res) => {
       message: "Shopkeeper updated successfully",
       data: shopKepper,
     });
-
   } catch (error) {
     console.error("Error updating shopkeeper:", error);
     res.status(500).json({
@@ -281,35 +314,35 @@ router.put("/shopKepper/:id",async (req, res) => {
   }
 });
 
-
 router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
   try {
-    const shopKeppers = await ShopKepper.find({ isShop: true , isVerified : false}).lean().sort({createdAt : -1});
+    const shopKeppers = await ShopKepper.find({
+      isShop: true,
+      isVerified: false,
+    })
+      .lean()
+      .sort({ createdAt: -1 });
 
     const shopWithShopKepper = await Promise.all(
-      shopKeppers.map(async(kepper)=>{
-        const shop = await ShopDetails.findOne({owner : kepper._id}).lean();
-        if (!shop) return null; 
-        return {...kepper, shop}
+      shopKeppers.map(async (kepper) => {
+        const shop = await ShopDetails.findOne({ owner: kepper._id }).lean();
+        if (!shop) return null;
+        return { ...kepper, shop };
       })
-    )
+    );
     res.status(200).json({
       success: true,
       message: "Shopkeepers with shops details fetched successfully",
-      data: shopWithShopKepper
+      data: shopWithShopKepper,
     });
-    
   } catch (error) {
     console.error("Error fetching shopkeepers:", error);
     res.status(500).json({
       success: false,
       message: "Server Error",
-      error: error.message
+      error: error.message,
     });
   }
 });
-
-
-
 
 module.exports = router;
