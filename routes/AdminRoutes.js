@@ -111,12 +111,10 @@ router.post(
     }
     const licenseExist = await ShopDetails.findOne({ license });
     if (licenseExist) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Already shop exist on this license",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Already shop exist on this license",
+      });
     }
 
     try {
@@ -207,14 +205,12 @@ router.post("/", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${label} logged in successfully!`,
-        token,
-        user: { id: account._id },
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${label} logged in successfully!`,
+      token,
+      user: { id: account._id },
+    });
   } catch (error) {
     console.error(error);
     return res
@@ -287,16 +283,24 @@ router.delete("/delete/:id", async (req, res) => {
   }
 });
 
-
 router.put("/shopKepper/:id", async (req, res) => {
   try {
     const { id } = req.params;
-
-    const shopKepper = await ShopKepper.findByIdAndUpdate(
-      id,
-      { isVerified: true },
-      { new: true }
-    );
+    const { role } = req.body;
+    let shopKepper;
+    if (role === "accept") {
+      shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isVerified: true },
+        { new: true }
+      );
+    } else {
+      shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isShop: false },
+        { new: true }
+      );
+    }
 
     if (!shopKepper) {
       return res.status(404).json({
