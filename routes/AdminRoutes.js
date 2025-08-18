@@ -355,4 +355,57 @@ router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/getAllUser", authMiddleWare, async (req, res) => {
+  try {
+    const allUsers = await User.find();
+
+    if (!allUsers || allUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No users found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All users fetched successfully",
+      data: allUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching users",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
+  try {
+    const allShopkepper = await ShopKepper.find();
+
+    if (!allShopkepper || allShopkepper.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No Shopkepper found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All Shopkepper fetched successfully",
+      data: allShopkepper,
+    });
+  } catch (error) {
+    console.error("Error fetching Shopkepper:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching Shopkepper",
+      error: error.message,
+    });
+  }
+});
+
+
 module.exports = router;
