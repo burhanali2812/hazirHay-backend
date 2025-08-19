@@ -12,6 +12,7 @@ const shopKeeperSchema = new mongoose.Schema({
    verificationDocument:{type:String, required : true},
   isVerified: { type: Boolean, default : false },
   isShop: { type: Boolean, default : false },
+  isLive: { type: Boolean, default : false },
   createdAt: { type: Date, default: Date.now },
 });
 
