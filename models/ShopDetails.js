@@ -4,6 +4,7 @@ const reviewSchema = new mongoose.Schema({
   name: { type: String},
   date: { type: Date, default: Date.now },
   msg: { type: String },
+  rate : {type : Number}
 });
 
 const serviceSchema = new mongoose.Schema({
