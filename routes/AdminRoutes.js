@@ -209,7 +209,7 @@ router.post("/", async (req, res) => {
       success: true,
       message: `${label} logged in successfully!`,
       token,
-      user: { id: account._id },
+      user: account,
     });
   } catch (error) {
     console.error(error);
@@ -380,32 +380,32 @@ router.get("/getAllUser", authMiddleWare, async (req, res) => {
     });
   }
 });
-router.get("/getUserById", authMiddleWare, async (req, res) => {
-  try {
-    const{id} = req.user
-    const user = await User.findById(id);
+// router.get("/getUserById", authMiddleWare, async (req, res) => {
+//   try {
+//     const{id} = req.user
+//     const user = await User.findById(id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "No user found",
-      });
-    }
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No user found",
+//       });
+//     }
 
-    res.status(200).json({
-      success: true,
-      message: "user fetched successfully",
-      data: user,
-    });
-  } catch (error) {
-    console.error("Error fetching user:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching user",
-      error: error.message,
-    });
-  }
-});
+//     res.status(200).json({
+//       success: true,
+//       message: "user fetched successfully",
+//       data: user,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching user:", error.message);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server error while fetching user",
+//       error: error.message,
+//     });
+//   }
+// });
 
 router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
   try {
