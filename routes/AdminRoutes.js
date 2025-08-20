@@ -204,6 +204,7 @@ router.post("/", async (req, res) => {
       JWT_SECRET,
       { expiresIn: "1d" }
     );
+    await model.updateOne({ email: account.email }, { $inc: { activityCount: 1 } });
 
     return res.status(200).json({
       success: true,
@@ -267,12 +268,6 @@ router.get("/reverse-geocode", async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 // router.get("/getUserById", authMiddleWare, async (req, res) => {
 //   try {
 //     const{id} = req.user
@@ -299,10 +294,5 @@ router.get("/reverse-geocode", async (req, res) => {
 //     });
 //   }
 // });
-
-
-
-
-
 
 module.exports = router;
