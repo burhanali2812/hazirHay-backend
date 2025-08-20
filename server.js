@@ -3,6 +3,9 @@ const express = require("express")
 const cors = require("cors")
 require("dotenv").config();
 const AdminRoutes = require("./routes/AdminRoutes")
+const ShopKepperRoutes = require("./routes/ShopKepperRoutes")
+const UserRoutes = require("./routes/UserRoutes")
+const ShopRoutes = require("./routes/ShopsRoutes")
 
 const app = express();
 app.use(cors());
@@ -30,6 +33,9 @@ const connectDB = async () => {
 };
 
 app.use("/admin", AdminRoutes);
+app.use("/shops", ShopRoutes);
+app.use("/shopKeppers", ShopKepperRoutes);
+app.use("/users", UserRoutes);
 connectDB().then(()=>{
     app.listen(PORT, ()=>{
         console.log(`Server Running on PORT ${PORT}`)

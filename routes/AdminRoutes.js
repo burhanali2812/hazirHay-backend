@@ -267,119 +267,12 @@ router.get("/reverse-geocode", async (req, res) => {
   }
 });
 
-router.delete("/delete/:id", async (req, res) => {
-  const { id } = req.params;
 
-  try {
-    const deletedShop = await ShopKepper.findByIdAndDelete(id);
 
-    if (!deletedShop) {
-      return res.status(404).json({ message: "Shop not found" });
-    }
 
-    res.status(200).json({ message: "Deleted Successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message || "Unable to delete" });
-  }
-});
 
-router.put("/shopKepper/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { role } = req.body;
-    let shopKepper;
-    if (role === "accept") {
-      shopKepper = await ShopKepper.findByIdAndUpdate(
-        id,
-        { isVerified: true },
-        { new: true }
-      );
-    } else {
-      shopKepper = await ShopKepper.findByIdAndUpdate(
-        id,
-        { isShop: false },
-        { new: true }
-      );
-    }
 
-    if (!shopKepper) {
-      return res.status(404).json({
-        success: false,
-        message: "Shopkeeper not found",
-      });
-    }
 
-    res.status(200).json({
-      success: true,
-      message: "Shopkeeper updated successfully",
-      data: shopKepper,
-    });
-  } catch (error) {
-    console.error("Error updating shopkeeper:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message,
-    });
-  }
-});
-
-router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
-  try {
-    const shopKeppers = await ShopKepper.find({
-      isShop: true,
-      isVerified: false,
-    })
-      .lean()
-      .sort({ createdAt: -1 });
-
-    const shopWithShopKepper = await Promise.all(
-      shopKeppers.map(async (kepper) => {
-        const shop = await ShopDetails.findOne({ owner: kepper._id }).lean();
-        if (!shop) return null;
-        return { ...kepper, shop };
-      })
-    );
-    res.status(200).json({
-      success: true,
-      message: "Shopkeepers with shops details fetched successfully",
-      data: shopWithShopKepper,
-    });
-  } catch (error) {
-    console.error("Error fetching shopkeepers:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message,
-    });
-  }
-});
-
-router.get("/getAllUser", authMiddleWare, async (req, res) => {
-  try {
-    const allUsers = await User.find();
-
-    if (!allUsers || allUsers.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No users found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "All users fetched successfully",
-      data: allUsers,
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching users",
-      error: error.message,
-    });
-  }
-});
 // router.get("/getUserById", authMiddleWare, async (req, res) => {
 //   try {
 //     const{id} = req.user
@@ -407,57 +300,9 @@ router.get("/getAllUser", authMiddleWare, async (req, res) => {
 //   }
 // });
 
-router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
-  try {
-    const allShopkepper = await ShopKepper.find();
 
-    if (!allShopkepper || allShopkepper.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No Shopkepper found",
-      });
-    }
 
-    res.status(200).json({
-      success: true,
-      message: "All Shopkepper fetched successfully",
-      data: allShopkepper,
-    });
-  } catch (error) {
-    console.error("Error fetching Shopkepper:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching Shopkepper",
-      error: error.message,
-    });
-  }
-});
 
-router.get("/getAllShops", authMiddleWare, async (req, res) => {
-  try {
-    const allShops = await ShopDetails.find();
-
-    if (!allShops || allShops.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No Shop found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "All Shops fetched successfully",
-      data: allShops,
-    });
-  } catch (error) {
-    console.error("Error fetching Shop:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching Shop",
-      error: error.message,
-    });
-  }
-});
 
 
 module.exports = router;
