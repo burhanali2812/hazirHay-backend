@@ -3,6 +3,7 @@ const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
 const ShopKepper = require("../models/ShopKeeper");
+const ShopDetails = require("../models/ShopDetails");
 
 
 router.delete("/deleteShopKepper/:id", async (req, res) => {
