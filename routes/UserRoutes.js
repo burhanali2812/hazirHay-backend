@@ -31,4 +31,20 @@ router.get("/getAllUser", authMiddleWare, async (req, res) => {
   }
 });
 
+router.post("/update-last-active", async(req,res)=>{
+    const{userID} = req.body;
+    await User.findByIdAndUpdate(userID, { lastActive: new Date() })
+    res.status(200).json({success : true})
+})
+
+router.get("/get-live-users", authMiddleWare, async(req,res)=>{
+    const now = new Date();
+    const activeThreshold = new Date(now.getTime() - 2 * 60 * 1000);
+    try {
+        const liveUsers = await User.find({lastActive : {$gte: activeThreshold}})
+        res.status(200).json({success : true , data : liveUsers})
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+})
 module.exports = router;
