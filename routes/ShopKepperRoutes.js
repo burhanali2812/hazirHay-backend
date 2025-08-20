@@ -1,0 +1,126 @@
+const axios = require("axios");
+const authMiddleWare = require("../authMiddleWare");
+const express = require("express");
+const router = express.Router();
+const ShopKepper = require("../models/ShopKeeper");
+
+
+router.delete("/deleteShopKepper/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedShop = await ShopKepper.findByIdAndDelete(id);
+
+    if (!deletedShop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.status(200).json({ message: "Deleted Successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Unable to delete" });
+  }
+});
+
+
+router.put("/verifyShopKepper/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    let shopKepper;
+    if (role === "accept") {
+      shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isVerified: true },
+        { new: true }
+      );
+    } else {
+      shopKepper = await ShopKepper.findByIdAndUpdate(
+        id,
+        { isShop: false },
+        { new: true }
+      );
+    }
+
+    if (!shopKepper) {
+      return res.status(404).json({
+        success: false,
+        message: "Shopkeeper not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Shopkeeper updated successfully",
+      data: shopKepper,
+    });
+  } catch (error) {
+    console.error("Error updating shopkeeper:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+});
+
+
+router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
+  try {
+    const shopKeppers = await ShopKepper.find({
+      isShop: true,
+      isVerified: false,
+    })
+      .lean()
+      .sort({ createdAt: -1 });
+
+    const shopWithShopKepper = await Promise.all(
+      shopKeppers.map(async (kepper) => {
+        const shop = await ShopDetails.findOne({ owner: kepper._id }).lean();
+        if (!shop) return null;
+        return { ...kepper, shop };
+      })
+    );
+    res.status(200).json({
+      success: true,
+      message: "Shopkeepers with shops details fetched successfully",
+      data: shopWithShopKepper,
+    });
+  } catch (error) {
+    console.error("Error fetching shopkeepers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
+  try {
+    const allShopkepper = await ShopKepper.find();
+
+    if (!allShopkepper || allShopkepper.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No Shopkepper found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All Shopkepper fetched successfully",
+      data: allShopkepper,
+    });
+  } catch (error) {
+    console.error("Error fetching Shopkepper:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching Shopkepper",
+      error: error.message,
+    });
+  }
+});
+
+
+
+module.exports = router;

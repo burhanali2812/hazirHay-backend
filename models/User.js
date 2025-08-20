@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
    address: { type: String, required: true },
    profilePicture:{type:String, required : true},
    createdAt: { type: Date, default: Date.now },
+   lastActive: { type: Date, default: Date.now },
 })
 
 module.exports = mongoose.model("User", userSchema)
