@@ -14,6 +14,8 @@ const shopKeeperSchema = new mongoose.Schema({
   isShop: { type: Boolean, default : false },
   isLive: { type: Boolean, default : false },
   createdAt: { type: Date, default: Date.now },
+  activityCount: { type: Number, default: 0 }
+
 });
 
 module.exports = mongoose.model("ShopKeeper", shopKeeperSchema);

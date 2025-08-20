@@ -8,7 +8,9 @@ const adminSchema = new mongoose.Schema({
   phone: { type: String, required: true },
    address: { type: String, required: true },
    profilePicture:{type:String, required : true},
-   createdAt: { type: Date, default: Date.now }
+   createdAt: { type: Date, default: Date.now },
+   activityCount: { type: Number, default: 0 }
+
 })
 
 module.exports = mongoose.model("Admin", adminSchema)

@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
    profilePicture:{type:String, required : true},
    createdAt: { type: Date, default: Date.now },
    lastActive: { type: Date, default: Date.now },
+   activityCount: { type: Number, default: 0 }
+
 })
 
 module.exports = mongoose.model("User", userSchema)
