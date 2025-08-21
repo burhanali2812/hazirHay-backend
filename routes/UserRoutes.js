@@ -61,4 +61,19 @@ router.get("/get-latest-users", authMiddleWare, async (req, res) => {
   }
 });
 
+
+router.get("/get-frequent-users", authMiddleWare, async (req, res) => {
+  try {
+    const frequentUsers = await User.find()
+      .sort({ activityCount: -1 }) 
+      .limit(20); 
+
+    res.status(200).json({ success: true, data: frequentUsers });
+  } catch (error) {
+    console.error("Error fetching frequent users:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+
 module.exports = router;
