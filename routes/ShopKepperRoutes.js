@@ -124,7 +124,7 @@ router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
 
 router.put("/update-live", authMiddleWare, async (req, res) => {
   const { isLive } = req.body;
-  const shopKepper = req.user;
+ 
 
   try {
 
@@ -135,7 +135,7 @@ router.put("/update-live", authMiddleWare, async (req, res) => {
 
     // Update status
     await ShopKepper.findByIdAndUpdate(
-      shopKepper._id,
+     findShopKepper._id,
       { isLive: isLive },
       { new: true }
     );
