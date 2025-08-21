@@ -122,6 +122,32 @@ router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
   }
 });
 
+router.put("/update-live", authMiddleWare, async (req, res) => {
+  const { isLive } = req.body;
+  const shopKepper = req.user;
+
+  try {
+
+    const findShopKepper = await ShopKepper.findOne({ email: shopKepper.email });
+    if (!findShopKepper) {
+      return res.status(404).json({ success: false, message: "No Shopkeeper Found" });
+    }
+
+    // Update status
+    await ShopKepper.findByIdAndUpdate(
+      shopKepper._id,
+      { isLive: isLive },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, message: "Status updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 
 
 module.exports = router;
