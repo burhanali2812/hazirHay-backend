@@ -148,6 +148,25 @@ router.put("/update-live", authMiddleWare, async (req, res) => {
 });
 
 
+router.get("/getShopKepperStatus/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const shopKepper = await ShopKepper.findById(id);
+
+    if (!shopKepper) {
+      return res.status(404).json({ success: false, message: "Shopkeeper not found" });
+    }
+
+    res.status(200).json({ success: true, data: shopKepper.isLive });
+  } catch (error) {
+    console.error("Error fetching shopkeeper status:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+
 
 
 module.exports = router;
