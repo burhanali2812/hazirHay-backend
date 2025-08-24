@@ -127,18 +127,24 @@ router.put("/update-live", authMiddleWare, async (req, res) => {
   const shopKepper = req.user;
 
   try {
+    if (typeof isLive !== "boolean") {
+      return res.status(400).json({ success: false, message: "Invalid isLive value" });
+    }
 
     const findShopKepper = await ShopKepper.findOne({ email: shopKepper.email });
     if (!findShopKepper) {
       return res.status(404).json({ success: false, message: "No Shopkeeper Found" });
     }
 
-    // Update status
-    await ShopKepper.findByIdAndUpdate(
-       findShopKepper._id,
-      { isLive: isLive },
-      { new: true }
-    );
+    const shop = await ShopDetails.findOne({ owner: findShopKepper._id });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: "No Shop Found For This Shopkeeper" });
+    }
+
+    await Promise.all([
+      ShopKepper.findByIdAndUpdate(findShopKepper._id, { isLive }),
+      ShopDetails.findByIdAndUpdate(shop._id, { isLive })
+    ]);
 
     res.status(200).json({ success: true, message: "Status updated successfully" });
   } catch (error) {
