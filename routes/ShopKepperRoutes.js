@@ -95,7 +95,36 @@ router.get("/allShopkepperWithShops", authMiddleWare, async (req, res) => {
     });
   }
 });
+router.get("/allVerifiedShopkepperWithShops", authMiddleWare, async (req, res) => {
+  try {
+    const shopKeppers = await ShopKepper.find({
+      isShop: true,
+      isVerified: true,
+    })
+      .lean()
+      .sort({ createdAt: -1 });
 
+    const shopWithShopKepper = await Promise.all(
+      shopKeppers.map(async (kepper) => {
+        const shop = await ShopDetails.findOne({ owner: kepper._id }).lean();
+        if (!shop) return null;
+        return { ...kepper, shop };
+      })
+    );
+    res.status(200).json({
+      success: true,
+      message: "Shopkeepers with shops details fetched successfully",
+      data: shopWithShopKepper,
+    });
+  } catch (error) {
+    console.error("Error fetching shopkeepers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+});
 router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
   try {
     const allShopkepper = await ShopKepper.find();
