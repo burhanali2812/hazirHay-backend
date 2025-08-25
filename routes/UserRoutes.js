@@ -117,7 +117,7 @@ router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
 
 router.delete("/deleteUserLocation/:id", authMiddleWare, async (req, res) => {
   const locationId = req.params.id;
-  const userId = req.user._id; 
+  const userId = req.user.id; 
 
   try {
 
