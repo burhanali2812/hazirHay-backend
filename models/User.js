@@ -9,7 +9,19 @@ const userSchema = new mongoose.Schema({
    profilePicture:{type:String, required : true},
    createdAt: { type: Date, default: Date.now },
    lastActive: { type: Date, default: Date.now },
-   activityCount: { type: Number, default: 0 }
+   activityCount: { type: Number, default: 0 },
+    location: [{
+    name: {
+      type: String,
+    },
+    coordinates: {
+      type: [Number], 
+    },
+
+    area :{
+      type: String,
+    }
+  }]
 
 })
 
