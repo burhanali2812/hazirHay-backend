@@ -74,6 +74,46 @@ router.get("/get-frequent-users", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
+router.get("/getUserById/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+  const { name , coordinates , area } = req.body;
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.location.push({
+       name,
+      coordinates,
+      area
+    })
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Location added successfully", user });
+  } catch (error) {
+    console.error("Error saving user location:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 
 module.exports = router;
