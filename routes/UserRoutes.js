@@ -115,5 +115,32 @@ router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
   }
 });
 
+router.delete("/deleteUserLocation/:id", authMiddleWare, async (req, res) => {
+  const locationId = req.params.id;
+  const userId = req.user._id; 
+
+  try {
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Filter out the location to be deleted
+    user.location = user.location.filter(
+      (loc) => loc._id.toString() !== locationId
+    );
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Location deleted successfully", user });
+  } catch (error) {
+    console.error("Error deleting user location:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 
 module.exports = router;
