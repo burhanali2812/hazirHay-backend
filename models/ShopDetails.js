@@ -46,6 +46,7 @@ const shopDetailSchema = new mongoose.Schema({
 
   status: { type: String, default: "pending" },
   isLive: { type: Boolean, default : false },
+   socketId: { type: String, default: null },
 
   reviews: [reviewSchema],
   createdAt: { type: Date, default: Date.now },
