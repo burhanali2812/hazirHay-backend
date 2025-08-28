@@ -4,12 +4,18 @@ const {ShopKeeper} = require( "./models/ShopKeeper");
 let io;
 
 const initSocket = (server)=>{
-    io = new Server(server,{
-         cors: {
-      origin: "https://hazir-hay-frontend.vercel.app/",
-      methods: ["GET", "POST"],
-    },
-    })
+   const allowedOrigins = [
+  "http://localhost:3000",
+  "https://hazir-hay-frontend.vercel.app"
+];
+
+io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
     io.on("connection",(socket)=>{
         console.log("A New User Connected", socket.id);
