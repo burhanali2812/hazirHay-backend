@@ -30,5 +30,33 @@ router.get("/getAllShops", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/shopData/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const shop = await ShopDetails.findOne({ owner: id });
+
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Shop fetched successfully",
+      shop,
+    });
+  } catch (error) {
+    console.error("Error fetching shop:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching shop",
+    });
+  }
+});
+
+
 
 module.exports = router;

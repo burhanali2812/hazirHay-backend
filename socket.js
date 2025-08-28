@@ -55,7 +55,7 @@ const initSocket = (server) => {
     // Handle when provider goes online
     socket.on("goOnline", async (providerId) => {
       try {
-        await ShopKeeper.findByIdAndUpdate(providerId, {
+        await ShopDetails.findByIdAndUpdate(providerId, {
           socketId: socket.id,
         });
         console.log(`Provider ${providerId} is now online`);
@@ -68,7 +68,7 @@ const initSocket = (server) => {
     socket.on("disconnect", async () => {
       console.log("User Disconnected:", socket.id);
       try {
-        await ShopKeeper.findOneAndUpdate(
+        await ShopDetails.findOneAndUpdate(
           { socketId: socket.id },
           {  socketId: null }
         );
