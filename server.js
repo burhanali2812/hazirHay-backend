@@ -6,10 +6,15 @@ const AdminRoutes = require("./routes/AdminRoutes")
 const ShopKepperRoutes = require("./routes/ShopKepperRoutes")
 const UserRoutes = require("./routes/UserRoutes")
 const ShopRoutes = require("./routes/ShopsRoutes")
+const http = require("http");
+const path = require("path");
+const { initSocket } = require("./socket");
 
 const app = express();
 app.use(cors());
 app.use(express.json())
+
+const server = http.createServer(app);
 
 const PORT = process.env.PORT || 5000;
 app.get("/", (req, res) => {
@@ -31,13 +36,13 @@ const connectDB = async () => {
     process.exit(1); // Exit process with failure
   }
 };
-
+initSocket(server);
 app.use("/admin", AdminRoutes);
 app.use("/shops", ShopRoutes);
 app.use("/shopKeppers", ShopKepperRoutes);
 app.use("/users", UserRoutes);
 connectDB().then(()=>{
-    app.listen(PORT, ()=>{
+    server.listen(PORT, ()=>{
         console.log(`Server Running on PORT ${PORT}`)
     })
 })
