@@ -20,9 +20,13 @@ io = new Server(server, {
     io.on("connection",(socket)=>{
         console.log("A New User Connected", socket.id);
 
-        socket.on("diconnect",()=>{
-            console.log("User Disconnected", socket.id);  
+        socket.on("sendRequestData", (data)=>{
+             console.log("Request Data", data);  
         })
+
+      socket.on("disconnect",()=>{
+    console.log("User Disconnected", socket.id);  
+})
     })
 }
 
