@@ -1,20 +1,24 @@
 const { Server } = require("socket.io");
 const ShopKeeper = require("./models/ShopKeeper");
-const ShopDetails = require("./models/ShopDetails")
-
+const ShopDetails = require("./models/ShopDetails");
 
 let io;
 
 const initSocket = (server) => {
   const allowedOrigins = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://hazir-hay-frontend.vercel.app",
+    "https://hazir-hay-backend.wckd.pk",
   ];
 
   io = new Server(server, {
     cors: {
-      origin: allowedOrigins,
-      methods: ["GET", "POST"],
+      origin: [
+        "http://localhost:3001",
+        "https://hazir-hay-frontend.vercel.app",
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
     },
   });
@@ -31,21 +35,36 @@ const initSocket = (server) => {
 
         if (liveProviders.length === 0) {
           console.log("No online providers found");
+          socket.emit("requestStatus", {
+            success: false,
+            message: "No online providers found",
+          });
           return;
         }
-           const categoryProvider = liveProviders.filter(provider =>
-    Array.isArray(provider.servicesOffered) &&
-    provider.servicesOffered.some(service => service.category === data.category)
-  );
+        const categoryProvider = liveProviders.filter(
+          (provider) =>
+            Array.isArray(provider.servicesOffered) &&
+            provider.servicesOffered.some(
+              (service) => service.category === data.category
+            )
+        );
 
-  if (categoryProvider.length === 0) {
-    console.log(`No providers found for category: ${data.category}`);
-    return;
-  }
+        if (categoryProvider.length === 0) {
+          console.log(`No providers found for category: ${data.category}`);
+          socket.emit("requestStatus", {
+            success: false,
+            message: `No providers found for category: ${data.category}`,
+          });
+          return;
+        }
 
         categoryProvider.forEach((provider) => {
           io.to(provider.socketId).emit("newRequest", data);
           console.log("Request ssend", data);
+        });
+        socket.emit("requestStatus", {
+          success: true,
+          message: "Request sent to matching providers.",
         });
       } catch (error) {
         console.error("Error finding providers:", error);
@@ -70,7 +89,7 @@ const initSocket = (server) => {
       try {
         await ShopDetails.findOneAndUpdate(
           { socketId: socket.id },
-          {  socketId: null }
+          { socketId: null }
         );
       } catch (error) {
         console.error("Error setting provider offline:", error);
