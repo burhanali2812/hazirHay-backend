@@ -52,7 +52,7 @@ router.get("/shopData/:id", async (req, res) => {
     console.error("Error fetching shop:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while fetching shop",
+      message: "Server error while fetching shop data",
     });
   }
 });
