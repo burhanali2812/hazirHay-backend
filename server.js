@@ -11,7 +11,11 @@ const path = require("path");
 const { initSocket } = require("./socket");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3001", "https://hazir-hay-frontend.vercel.app"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
 app.use(express.json())
 
 const server = http.createServer(app);
