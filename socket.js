@@ -17,6 +17,7 @@ const initSocket = (server) => {
       origin: [
         "http://localhost:3001",
         "https://hazir-hay-frontend.vercel.app",
+        "https://hazir-hay-backend.wckd.pk", 
       ],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
@@ -25,7 +26,7 @@ const initSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("A New User Connected:", socket.id);
-
+     socket.emit("requestStatus", { success: true, message: "Test message from server" });
     // Handle when user sends a request
     socket.on("sendRequestData", async (data) => {
       console.log("Request Data:", data);
@@ -35,7 +36,7 @@ const initSocket = (server) => {
 
         if (liveProviders.length === 0) {
           console.log("No online providers found");
-          socket.emit("requestStatus", {
+          io.to(socket.id).emit("requestStatus", {
             success: false,
             message: "No online providers found",
           });
@@ -51,7 +52,7 @@ const initSocket = (server) => {
 
         if (categoryProvider.length === 0) {
           console.log(`No providers found for category: ${data.category}`);
-          socket.emit("requestStatus", {
+          io.to(socket.id).emit("requestStatus", {
             success: false,
             message: `No providers found for category: ${data.category}`,
           });
@@ -62,7 +63,7 @@ const initSocket = (server) => {
           io.to(provider.socketId).emit("newRequest", data);
           console.log("Request ssend", data);
         });
-        socket.emit("requestStatus", {
+        io.to(socket.id).emit("requestStatus", {
           success: true,
           message: "Request sent to matching providers.",
         });
