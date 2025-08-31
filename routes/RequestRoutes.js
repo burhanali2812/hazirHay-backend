@@ -68,4 +68,28 @@ router.post("/sendRequestData", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid ShopOwner ID" });
+    }
+
+    const requests = await Requests.find({ shopOwnerId: id })
+      .populate("userId", "name phone email profilePicture")
+      .sort({ createdAt: -1 })
+      .lean();
+       if (!requests || requests.length === 0) {
+      return res.status(404).json({ success: false, message: "No requests found for this shop owner" });
+    }
+
+    res.status(200).json({ success: true, data: requests });
+  } catch (error) {
+    console.error("Error fetching Shopkeeper requests:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 module.exports = router;
