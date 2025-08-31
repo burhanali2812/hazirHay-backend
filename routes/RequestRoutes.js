@@ -10,7 +10,7 @@ router.post("/sendRequestData", authMiddleWare, async (req, res) => {
     const {category,subCategory, location ,userId} = req.body;
 
 
-    if (!userId || !category || subCategory || !location || !location.coordinates) {
+    if (!userId || !category || !subCategory || !location || !location.coordinates) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields (userId, category, subCategory, location)",
