@@ -6,6 +6,7 @@ const AdminRoutes = require("./routes/AdminRoutes")
 const ShopKepperRoutes = require("./routes/ShopKepperRoutes")
 const UserRoutes = require("./routes/UserRoutes")
 const ShopRoutes = require("./routes/ShopsRoutes")
+const RequestRoutes = require("./routes/RequestRoutes")
 const http = require("http");
 const path = require("path");
 const { initSocket } = require("./socket");
@@ -45,6 +46,7 @@ app.use("/admin", AdminRoutes);
 app.use("/shops", ShopRoutes);
 app.use("/shopKeppers", ShopKepperRoutes);
 app.use("/users", UserRoutes);
+app.use("/requests", RequestRoutes);
 connectDB().then(()=>{
     server.listen(PORT, ()=>{
         console.log(`Server Running on PORT ${PORT}`)
