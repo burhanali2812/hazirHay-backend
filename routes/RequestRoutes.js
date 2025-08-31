@@ -44,6 +44,7 @@ router.post("/sendRequestData", authMiddleWare, async (req, res) => {
         new Requests({
           shopId: provider._id,
           userId,
+          shopOwnerId : provider.owner,
           location: {
             coordinates: location.coordinates,
             area: location.area,

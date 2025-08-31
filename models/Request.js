@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const requestSchema = new mongoose.Schema({
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopDetails", required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  shopOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopKeeper", required: true },
    location: [{
     coordinates: {
       type: [Number], 
