@@ -62,8 +62,8 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
   try {
     const providers = await ShopDetails.find({
       isLive: true,
-      category: category,
-      "subCategory.name": subCategory, 
+      "servicesOffered.category": category,
+      "servicesOffered.subCategory.name": subCategory,
     });
 
     if (!providers.length) {
@@ -85,6 +85,7 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
     });
   }
 });
+
 
 
 
