@@ -56,6 +56,37 @@ router.get("/shopData/:id", async (req, res) => {
     });
   }
 });
+router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
+  const { category, subCategory } = req.query; 
+
+  try {
+    const providers = await ShopDetails.find({
+      isLive: true,
+      category: category,
+      "subCategory.name": subCategory, 
+    });
+
+    if (!providers.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No providers found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: providers,
+    });
+  } catch (error) {
+    console.error("Error fetching shop by category:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching shop by category",
+    });
+  }
+});
+
+
 
 
 
