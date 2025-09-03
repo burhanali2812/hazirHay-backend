@@ -57,25 +57,37 @@ router.get("/shopData/:id", async (req, res) => {
   }
 });
 router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
-  const { category, subCategory } = req.query; 
+  const { category, subCategory } = req.query;
 
   try {
     const providers = await ShopDetails.find({
       isLive: true,
-      "servicesOffered.category": category,
-      "servicesOffered.subCategory.name": subCategory,
-    });
+      servicesOffered: {
+        $elemMatch: {
+          category: category,
+          "subCategory.name": subCategory,
+        },
+      },
+    })
+      .populate({
+        path: "owner",
+        match: { isVerified: true }, // filter by isVerified directly in populate
+        select: "isVerified",        // only fetch the isVerified field
+      });
 
-    if (!providers.length) {
+    // Remove shops where owner is null after populate filter
+    const verifiedProviders = providers.filter(shop => shop.owner);
+
+    if (!verifiedProviders.length) {
       return res.status(404).json({
         success: false,
-        message: "No providers found",
+        message: "No verified providers found",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: providers,
+      data: verifiedProviders,
     });
   } catch (error) {
     console.error("Error fetching shop by category:", error);
@@ -85,6 +97,7 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
     });
   }
 });
+
 
 
 
