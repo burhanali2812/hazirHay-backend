@@ -98,6 +98,34 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
   }
 });
 
+router.post("/addReview", async (req, res) => {
+  const { shopId, name, msg, rate } = req.body;
+  try {
+    const shop = await ShopDetails.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop not found",
+      });
+    }
+    const newReview = { name, msg, rate };
+    shop.reviews.push(newReview);
+    await shop.save();
+    res.status(200).json({
+      success: true,
+      message: "Review added successfully",
+      review: newReview,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding review",
+      error: error.message,
+    });
+    console.error("Error adding review:", error.message);
+  }
+});
+
 
 
 
