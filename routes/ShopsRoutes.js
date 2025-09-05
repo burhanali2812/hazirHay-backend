@@ -61,7 +61,6 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
 
   try {
     const providers = await ShopDetails.find({
-      isLive: true,
       servicesOffered: {
         $elemMatch: {
           category: category,
@@ -75,7 +74,7 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
         select: "isVerified",        // only fetch the isVerified field
       });
 
-    // Remove shops where owner is null after populate filter
+  
     const verifiedProviders = providers.filter(shop => shop.owner);
 
     if (!verifiedProviders.length) {
