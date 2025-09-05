@@ -152,8 +152,9 @@ router.post("/getPriceEstimate", async (req, res) => {
     const min5 = avgPrice - percentage5;
     const min10 = avgPrice - percentage10;
     const max10 = avgPrice + percentage10;
+    const random = avgPrice + percentage10 * (Math.random() * 2 - 1);
 
-    const finalPrices = [min10, min5, avgPrice, max5, max10];
+    const finalPrices = [min10, min5, avgPrice, max5, max10, random];
 
     res.status(200).json({
       success: true,
