@@ -126,6 +126,51 @@ router.post("/addReview", async (req, res) => {
   }
 });
 
+router.post("/getPriceEstimate", async (req, res) => {
+  const { category, subCategory } = req.body;
+  try {
+    let prices = [];
+    const findShop = await ShopDetails.find();
+
+    findShop.forEach(shop => {
+      shop.servicesOffered.forEach(service => {
+        if (
+          service.category === category &&
+          service.subCategory.name === subCategory
+        ) {
+          prices.push(service.subCategory.price);
+        }
+      });
+    });
+
+    const total = prices.reduce((acc, price) => acc + price, 0);
+    const avgPrice = total / prices.length;
+
+    const percentage10 = avgPrice * 0.1;
+    const percentage5 = avgPrice * 0.05;
+    const max5 = avgPrice + percentage5;
+    const min5 = avgPrice - percentage5;
+    const min10 = avgPrice - percentage10;
+    const max10 = avgPrice + percentage10;
+
+    const finalPrices = [min10, min5, avgPrice, max5, max10];
+
+    res.status(200).json({
+      success: true,
+      message: "Average price fetched successfully",
+      averagePrices: finalPrices,
+      totalServices: prices.length,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+
 
 
 
