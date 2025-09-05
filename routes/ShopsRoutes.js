@@ -142,12 +142,11 @@ router.post("/getPriceEstimate", async (req, res) => {
         }
       });
     });
-    //     if (prices.length === 0) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: "No services found for given category and subcategory",
-    //   });
-    // }
+        if (prices.length === 0) {
+      return res.status(404).json({
+        success: false,
+      });
+    }
 
     const total = prices.reduce((acc, price) => acc + price, 0);
     const avgPrice = total / prices.length;
