@@ -81,6 +81,7 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "No verified providers found",
+        notFound : true,
       });
     }
 
