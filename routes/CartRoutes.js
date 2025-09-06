@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/saveCartData", authMiddleWare, async (req, res) => {
   const { category, subCategory, price, shopName, shopId } = req.body;
-  const userId = req.user._id; 
+  const userId = req.user.id; 
 
   try {
 
