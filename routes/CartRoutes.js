@@ -57,6 +57,38 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
     });
   }
 });
+router.delete("/deleteCartItem/:itemId", authMiddleWare, async (req, res) => {
+  const { itemId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const updatedCart = await Cart.findOneAndUpdate(
+      { userId },  // find cart by userId
+      { $pull: { items: { _id: itemId } } }, 
+      { new: true }
+    );
+
+    if (!updatedCart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart or item not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Item removed successfully",
+      data: updatedCart,
+    });
+  } catch (error) {
+    console.error("Error deleting item:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting item",
+    });
+  }
+});
+
 
 
 
