@@ -35,12 +35,9 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const cart = await Cart.findOne({ userId }).populate({
-      path: "items.shopId",
-      select: "shopName location.coordinates",
-    });
+    const cartItems = await Cart.find({ userId }); 
 
-    if (!cart || cart.items.length === 0) {
+    if (!cartItems || cartItems.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Your cart is empty!",
@@ -50,7 +47,7 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Cart data found",
-      data: cart,
+      data: cartItems,
     });
   } catch (error) {
     console.error("Error fetching cart:", error.message);
@@ -60,7 +57,6 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
     });
   }
 });
-
 router.delete("/deleteCartItem/:itemId", authMiddleWare, async (req, res) => {
   const { itemId } = req.params;
   const userId = req.user.id;
