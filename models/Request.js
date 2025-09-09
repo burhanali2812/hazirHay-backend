@@ -14,6 +14,8 @@ const requestSchema = new mongoose.Schema({
   }],
   category: { type: String, required: true },
   subCategory: { type: String, required: true },
+  orderId: { type: String, required: true },
+  cost: { type: Number, required: true },
   status: { type: String, enum: ["pending", "accepted", "rejected"], default: "pending" },
   createdAt: { type: Date, default: Date.now }
 });
