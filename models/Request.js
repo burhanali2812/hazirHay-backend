@@ -12,6 +12,14 @@ const requestSchema = new mongoose.Schema({
       type: String,
     }
   }],
+    serviceCharges: {
+    rate: {
+      type: [Number], 
+    },
+    distance :{
+      type: Number,
+    }
+  },
   category: { type: String, required: true },
   subCategory: { type: String, required: true },
   orderId: { type: String, required: true },
