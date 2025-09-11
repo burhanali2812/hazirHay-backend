@@ -60,7 +60,7 @@ router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
   }
 });
 
-router.get("/getUserCart", authMiddleWare, async (req, res) => {
+router.get("/getUserRequests", authMiddleWare, async (req, res) => {
   const id = req.user.id;
 
   try {
