@@ -60,4 +60,31 @@ router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/getUserCart", authMiddleWare, async (req, res) => {
+  const id = req.user.id;
+
+  try {
+    const request = await Requests.find({ userId : id });
+
+    if (!request || request.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "request not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "request Fetch successfully",
+      data: request,
+    });
+  } catch (error) {
+    console.error("Error fetching request:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching request",
+    });
+  }
+});
+
 module.exports = router;
