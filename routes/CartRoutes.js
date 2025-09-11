@@ -116,6 +116,33 @@ router.delete("/deleteUserCart", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/getUserCart", authMiddleWare, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const cartData = await Cart.find({ userId });
+
+    if (!cartData || cartData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Cart Fetch successfully",
+      data: deletedCart,
+    });
+  } catch (error) {
+    console.error("Error fetching cart:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching cart",
+    });
+  }
+});
+
 
 
 
