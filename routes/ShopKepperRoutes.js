@@ -125,6 +125,26 @@ router.get("/allVerifiedShopkepperWithShops", authMiddleWare, async (req, res) =
     });
   }
 });
+router.get("/shopWithShopKepper/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const keeper = await ShopKepper.findById(id).lean();
+    if (!keeper) {
+      return res.status(404).json({ message: "ShopKeeper not found" });
+    }
+
+    const shop = await ShopDetails.findOne({ owner: id }).lean();
+
+    const shopWithKepper = { ...keeper, shop };
+
+    res.status(200).json({success : true , message : "Shop with shopkepper fetch successfully", data : shopWithKepper});
+  } catch (error) {
+    console.error("Error fetching shop with keeper:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 router.get("/getAllShopKepper", authMiddleWare, async (req, res) => {
   try {
     const allShopkepper = await ShopKepper.find();
