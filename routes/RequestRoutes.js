@@ -87,4 +87,25 @@ router.get("/getUserRequests", authMiddleWare, async (req, res) => {
   }
 });
 
+router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const order = await Requests.findOneAndDelete({ orderId: id });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order Not Found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Order ${id} deleted successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+
 module.exports = router;
