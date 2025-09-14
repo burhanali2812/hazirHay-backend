@@ -99,7 +99,7 @@ router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Order ${id} deleted successfully`,
+      message: `Order ${id} cancelled successfully`,
     });
   } catch (error) {
     console.error(error);
