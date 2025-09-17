@@ -9,7 +9,7 @@ const initSocket = (server) => {
     "http://localhost:3000",
     "http://localhost:3001",
     "https://hazir-hay-frontend.vercel.app",
-    "https://hazir-hay-backend.wckd.pk",
+    "https://hazir-hay-backend.vercel.app",
   ];
 
   io = new Server(server, {
@@ -17,7 +17,7 @@ const initSocket = (server) => {
       origin: [
         "http://localhost:3001",
         "https://hazir-hay-frontend.vercel.app",
-        "https://hazir-hay-backend.wckd.pk", 
+        "https://hazir-hay-backend.vercel.app",
       ],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
@@ -26,7 +26,10 @@ const initSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("A New User Connected:", socket.id);
-     socket.emit("requestStatus", { success: true, message: "Test message from server" });
+    socket.emit("requestStatus", {
+      success: true,
+      message: "Test message from server",
+    });
     // Handle when user sends a request
     socket.on("sendRequestData", async (data) => {
       console.log("Request Data:", data);

@@ -15,7 +15,7 @@ const requestSchema = new mongoose.Schema({
   }],
     serviceCharges: {
     rate: {
-      type: [Number], 
+      type: Number, 
     },
     distance :{
       type: Number,
