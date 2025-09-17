@@ -51,13 +51,13 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
             return;
           }
 
-          const newRequest = new Requests({
+          const newNotification = new Notification({
             type: notify.type,
             message: notify.message,
             userId: shop.owner,
           });
 
-          const savedRequest = await newRequest.save();
+          const savedRequest = await newNotification.save();
           saved.push(savedRequest);
         } catch (err) {
           errors.push({ notify, error: err.message });
