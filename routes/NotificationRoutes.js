@@ -82,7 +82,7 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
 router.get("/getAllNotification/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
   try {
-    const notifications = await Notification.find({ userId: id });
+    const notifications = await Notification.find({ userId: id }).sort({createdAt: -1});
 
     if (notifications.length === 0) {
       return res
@@ -113,5 +113,30 @@ router.delete("/deleteNotification/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.put("/updateNotification", authMiddleWare, async (req, res) => {
+  try {
+    const { notifications } = req.body;
+
+    // Wait for all updates
+    await Promise.all(
+      notifications.map(notify =>
+        Notification.findByIdAndUpdate(
+          notify._id,
+          { isSeen: true },
+          { new: true }
+        )
+      )
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Notifications Updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
 
 module.exports = router;
