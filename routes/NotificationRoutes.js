@@ -14,7 +14,7 @@ router.post("/addNotification", authMiddleWare, async (req, res) => {
       userId,
     });
 
-    await notification.save(); 
+    await notification.save();
 
     res.status(201).json({
       success: true,
@@ -23,9 +23,7 @@ router.post("/addNotification", authMiddleWare, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
@@ -80,12 +78,11 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
   }
 });
 
-
 // Get all notifications
 router.get("/getAllNotification/:id", authMiddleWare, async (req, res) => {
-    const {id} = req.params;
+  const { id } = req.params;
   try {
-    const notifications = await Notification.find({userId : id});
+    const notifications = await Notification.find({ userId: id });
 
     if (notifications.length === 0) {
       return res
@@ -100,9 +97,20 @@ router.get("/getAllNotification/:id", authMiddleWare, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+router.delete("/deleteNotification/:id", authMiddleWare, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Notification.findByIdAndDelete(id);
+    res.status(200).json({
+      success: true,
+      message: "Notifications deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
