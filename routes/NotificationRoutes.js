@@ -82,9 +82,10 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
 
 
 // Get all notifications
-router.get("/getAllNotification", authMiddleWare, async (req, res) => {
+router.get("/getAllNotification/:id", authMiddleWare, async (req, res) => {
+    const {id} = req.params;
   try {
-    const notifications = await Notification.find();
+    const notifications = await Notification.find({userId : id});
 
     if (notifications.length === 0) {
       return res
