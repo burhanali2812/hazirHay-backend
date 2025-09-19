@@ -6,12 +6,13 @@ const ShopDetails = require("../models/ShopDetails");
 
 // Add a new notification
 router.post("/addNotification", authMiddleWare, async (req, res) => {
-  const { type, message, userId } = req.body;
+  const { type, message, userId , checkoutId} = req.body;
   try {
     const notification = new Notification({
       type,
       message,
       userId,
+                  checkoutId,
     });
 
     await notification.save();
@@ -52,7 +53,6 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
           const newNotification = new Notification({
             type: notify.type,
             message: notify.message,
-            checkoutId: notify.checkoutId || "N/A",
             userId: shop.owner,
           });
 
