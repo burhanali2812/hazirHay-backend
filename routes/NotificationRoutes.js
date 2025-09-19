@@ -59,7 +59,8 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
           const savedRequest = await newNotification.save();
           saved.push(savedRequest);
         } catch (err) {
-          errors.push({ notify, error: err.message });
+            console.error("Notification save error:", err); // 👈 full error details
+  errors.push({ notify, error: err.message });
         }
       })
     );
