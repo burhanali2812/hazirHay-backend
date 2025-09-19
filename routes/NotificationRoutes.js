@@ -52,7 +52,7 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
           const newNotification = new Notification({
             type: notify.type,
             message: notify.message,
-            checkoutId: notify.checkoutId,
+            checkoutId: notify.checkoutId || "N/A",
             userId: shop.owner,
           });
 
