@@ -52,6 +52,7 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
           const newNotification = new Notification({
             type: notify.type,
             message: notify.message,
+            checkoutId: notify.checkoutId,
             userId: shop.owner,
           });
 
@@ -93,6 +94,7 @@ router.get("/getAllNotification/:id", authMiddleWare, async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Notifications fetched successfully",
+
       data: notifications,
     });
   } catch (error) {
