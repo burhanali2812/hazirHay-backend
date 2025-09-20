@@ -107,7 +107,7 @@ router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
   }
 });
 
-router.delete("deleteRequests", async(req,res)=>{
+router.delete("/deleteRequests", async(req,res)=>{
   try {
     await Requests.deleteMany();
     res.json({message : "deleted all"})
