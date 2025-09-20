@@ -7,7 +7,7 @@ const requestSchema = new mongoose.Schema({
   shopOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopKeeper", required: true },
    location: [{
     coordinates: {
-      type: [Number], 
+      type: [Number],
     },
     area :{
       type: String,
