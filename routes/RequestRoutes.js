@@ -39,7 +39,7 @@ router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const requests = await Requests.find({ shopOwnerId: id , status : "pending"})
+    const requests = await Requests.find({ shopOwnerId: id })
       .populate("userId", "name phone email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
