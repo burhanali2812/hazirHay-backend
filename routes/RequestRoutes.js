@@ -39,7 +39,7 @@ router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const requests = await Requests.find({ shopOwnerId: id })
+    const requests = await Requests.find({ shopOwnerId: id , status : "pending"})
       .populate("userId", "name phone email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
@@ -100,6 +100,28 @@ router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
     res.status(200).json({
       success: true,
       message: `Order ${id} cancelled successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+  const {type} = req.body;
+  const statusUpdated = type === "accept" ? "accepted" : "rejected";
+
+  try {
+    const order = await Requests.findByIdAndUpdate( id ,{status : statusUpdated}, {new :  true});
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order Not Found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Order ${id} status updated successfully`,
     });
   } catch (error) {
     console.error(error);
