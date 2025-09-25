@@ -54,6 +54,7 @@ router.post("/sendBulkNotification", authMiddleWare, async (req, res) => {
             type: notify.type,
             message: notify.message,
             userId: shop.owner,
+            checkoutId : notify.checkoutId
           });
 
           const savedRequest = await newNotification.save();
