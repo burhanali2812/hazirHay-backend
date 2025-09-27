@@ -176,6 +176,54 @@ router.post("/getPriceEstimate", async (req, res) => {
   }
 });
 
+router.put("/updateLiveLocation/:shopId", async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    if (lat == null || lng == null) {
+      return res.status(400).json({ message: "lat and lng are required" });
+    }
+
+    const shop = await ShopDetails.findByIdAndUpdate(
+      req.params.shopId,
+      {
+        $set: {
+          "location.coordinates": [lat, lng], 
+        },
+      },
+      { new: true }
+    );
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.json({
+      message: "Coordinates updated successfully",
+      coordinates: shop.location.coordinates,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/getLiveLocation/:shopId", async (req, res) => {
+  try {
+    const shop = await ShopDetails.findById(req.params.shopId).select("location.coordinates");
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.json({
+      coordinates: shop.location.coordinates, 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 
 
 
