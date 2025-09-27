@@ -176,7 +176,7 @@ router.post("/getPriceEstimate", async (req, res) => {
   }
 });
 
-router.put("/updateLiveLocation/:shopId", async (req, res) => {
+router.put("/updateLiveLocation/:shopId", authMiddleWare,async (req, res) => {
   try {
     const { lat, lng } = req.body;
     if (lat == null || lng == null) {
@@ -207,7 +207,7 @@ router.put("/updateLiveLocation/:shopId", async (req, res) => {
   }
 });
 
-router.get("/getLiveLocation/:shopId", async (req, res) => {
+router.get("/getLiveLocation/:shopId",authMiddleWare, async (req, res) => {
   try {
     const shop = await ShopDetails.findById(req.params.shopId).select("location.coordinates");
     if (!shop) {
