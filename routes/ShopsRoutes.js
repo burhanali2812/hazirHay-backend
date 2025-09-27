@@ -198,12 +198,13 @@ router.put("/updateLiveLocation/:shopId", authMiddleWare,async (req, res) => {
     }
 
     res.json({
+      success : true,
       message: "Coordinates updated successfully",
       coordinates: shop.location.coordinates,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({success : false, message: "Server error" });
   }
 });
 
@@ -215,11 +216,13 @@ router.get("/getLiveLocation/:shopId",authMiddleWare, async (req, res) => {
     }
 
     res.json({
+      success : true,
+      message: "live coordinates found", 
       coordinates: shop.location.coordinates, 
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success : false,message: "Server error" });
   }
 });
 
