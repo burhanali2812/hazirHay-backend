@@ -130,11 +130,15 @@ router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
 });
 router.put("/completeRequest/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
+  const{requests} = req.body;
 
+  const completed = [];
   try {
-    const order = await Requests.findByIdAndUpdate( id ,{status : "completed"}, {new :  true});
-
-    if (!order) {
+    for (const reqData of requests) {
+      const order = await Requests.findByIdAndUpdate( reqData._id ,{status : "completed"}, {new :  true});
+      completed.push(order)
+    }
+    if (completed.length === 0) {
       return res.status(404).json({ success: false, message: "Order Not Found" });
     }
 
