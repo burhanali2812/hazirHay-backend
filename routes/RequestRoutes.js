@@ -128,8 +128,7 @@ router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-router.put("/completeRequest/:id", authMiddleWare, async (req, res) => {
-  const { id } = req.params;
+router.put("/completeRequest", authMiddleWare, async (req, res) => {
   const{requests} = req.body;
 
   const completed = [];
@@ -144,7 +143,7 @@ router.put("/completeRequest/:id", authMiddleWare, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Order ${id} status updated successfully`,
+      message: "Order completed  successfully",
     });
   } catch (error) {
     console.error(error);
