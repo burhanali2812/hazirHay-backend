@@ -128,6 +128,25 @@ router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.put("/completeRequest/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const order = await Requests.findByIdAndUpdate( id ,{status : "completed"}, {new :  true});
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order Not Found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Order ${id} status updated successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 router.delete("/deleteRequests", async(req,res)=>{
   try {
