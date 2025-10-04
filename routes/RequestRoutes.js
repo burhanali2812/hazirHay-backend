@@ -150,6 +150,31 @@ router.put("/completeRequest", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.get("/getAllRequests", authMiddleWare, async (req, res) => {
+
+  try {
+    const request = await Requests.find();
+
+    if (!request || request.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "request not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "request Fetch successfully",
+      data: request,
+    });
+  } catch (error) {
+    console.error("Error fetching request:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching request",
+    });
+  }
+});
 
 router.delete("/deleteRequests", async(req,res)=>{
   try {
