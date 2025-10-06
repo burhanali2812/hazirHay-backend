@@ -229,6 +229,16 @@ router.put("/updateBusy/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+router.get("/getBusyStatus/:id", authMiddleWare, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await ShopKepper.findById(id);
+    res.status(200).json({ success: true, message: "Shopkeeper busy status get successfully" , data : user.isBusy });
+  } catch (error) {
+    console.error("Error getting shopkeeper status:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 
 
