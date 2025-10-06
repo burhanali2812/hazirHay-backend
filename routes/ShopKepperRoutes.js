@@ -219,7 +219,7 @@ router.get("/getShopKepperStatus/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-router.put("updateBusy/:id", authMiddleWare, async (req, res) => {
+router.put("/updateBusy/:id", authMiddleWare, async (req, res) => {
   try {
     const { id } = req.params;
     await ShopKepper.findByIdAndUpdate(id, { isBusy: true });
