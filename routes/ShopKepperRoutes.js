@@ -222,7 +222,11 @@ router.get("/getShopKepperStatus/:id", authMiddleWare, async (req, res) => {
 router.put("/updateBusy/:id", authMiddleWare, async (req, res) => {
   try {
     const { id } = req.params;
-    await ShopKepper.findByIdAndUpdate(id, { isBusy: true });
+    const {isBusy} = req.body;
+    if (typeof isBusy !== "boolean") {
+      return res.status(400).json({ success: false, message: "Invalid isBusy value" });
+    }
+    await ShopKepper.findByIdAndUpdate(id, { isBusy: isBusy });
     res.status(200).json({ success: true, message: "Shopkeeper is now busy" });
   } catch (error) {
     console.error("Error updating shopkeeper status:", error);
