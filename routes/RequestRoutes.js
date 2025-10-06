@@ -150,6 +150,28 @@ router.put("/completeRequest", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.put("/progressRequest", authMiddleWare, async (req, res) => {
+  const{requests} = req.body;
+
+  const progresss = [];
+  try {
+    for (const reqData of requests) {
+      const order = await Requests.findByIdAndUpdate( reqData._id ,{status : "inProgress"}, {new :  true});
+      progresss.push(order)
+    }
+    if (completed.length === 0) {
+      return res.status(404).json({ success: false, message: "Order Not Found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order Progress  set successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 router.get("/getAllRequests", authMiddleWare, async (req, res) => {
 
   try {
