@@ -142,5 +142,18 @@ router.put("/updateNotification", authMiddleWare, async (req, res) => {
   }
 });
 
+router.delete("/clearAllNotifications/:userId", authMiddleWare, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await Notification.deleteMany({ userId });
+    res.status(200).json({
+      success: true,
+      message: "All notifications cleared successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  } 
+});
 
 module.exports = router;
