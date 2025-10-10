@@ -183,6 +183,34 @@ router.put("/progressRequest", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) => {
+  const { requests } = req.body;
+
+  try {
+    if (!requests || requests.length === 0) {
+      return res.status(400).json({ success: false, message: "No requests provided" });
+    }
+
+
+    for (const reqData of requests) {
+      const updatedOrder = await Requests.findByIdAndUpdate(
+        reqData._id,
+        { status: "deleted" },
+        { new: true }
+      );
+    }
+
+
+    res.status(200).json({
+      success: true,
+      message: "Orders deleted successfully",
+      updatedOrders: progressedOrders,
+    });
+  } catch (error) {
+    console.error("Error in deleting orders:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 router.get("/getAllRequests", authMiddleWare, async (req, res) => {
 
