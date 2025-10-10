@@ -204,7 +204,6 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
     res.status(200).json({
       success: true,
       message: "Orders deleted successfully",
-      updatedOrders: progressedOrders,
     });
   } catch (error) {
     console.error("Error in deleting orders:", error);
