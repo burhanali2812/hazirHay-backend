@@ -214,7 +214,7 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
 router.get("/getAllRequests", authMiddleWare, async (req, res) => {
 
   try {
-    const request = await Requests.find();
+    const request = await Requests.find({status : { $in: ["accepted", "rejected","completed","inProgress","deleted"] }});
 
     if (!request || request.length === 0) {
       return res.status(404).json({
