@@ -192,7 +192,7 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
-    const shop = await ShopDetails.findById(id);
+    const shop = await ShopDetails.findOne({owner: id});
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
