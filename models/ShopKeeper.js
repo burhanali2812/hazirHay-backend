@@ -14,8 +14,10 @@ const shopKeeperSchema = new mongoose.Schema({
   isBusy: { type: Boolean, default : false },
   isShop: { type: Boolean, default : false },
   isLive: { type: Boolean, default : false },
+
   createdAt: { type: Date, default: Date.now },
   activityCount: { type: Number, default: 0 },
+
   socketId: { type: String, default: null },
 
 });
