@@ -265,7 +265,7 @@ router.get("/checkShopStatus", authMiddleWare, async (req, res) => {
   }
 });
 
-router.put("/resetCancelCount/id",  async (req, res) => {
+router.put("/resetCancelCount/:id",  async (req, res) => {
   try {
     const { id } = req.params;
     const shop = await ShopDetails.findById(id);
