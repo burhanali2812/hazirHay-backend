@@ -226,6 +226,45 @@ router.get("/getLiveLocation/:shopId",authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/checkShopStatus", authMiddleWare, async (req, res) => {
+  try {
+    const { id } = req.user;
+    const shop = await ShopDetails.findOne({owner: id});
+    if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
+
+    if (shop.isBlocked && shop.blockedRequestDate) {
+      const now = new Date();
+      const blockEnd = new Date(shop.blockedRequestDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      if (now < blockEnd) {
+        const remainingDays = Math.ceil((blockEnd - now) / (1000 * 60 * 60 * 24));
+        return res.status(200).json({
+          success: true,
+          status: shop.isBlocked,
+          remainingDays,
+          message: `Your shop is temporarily blocked. ${remainingDays} day(s) remaining.`,
+        });
+      } else {
+        // Auto-unblock
+        shop.isBlocked = false;
+        shop.cancelRequest = 0;
+        shop.blockedRequestDate = null;
+        await shop.save();
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      status: shop.isBlocked,
+      cancelCount: shop.cancelRequest,
+      message: "Your shop is active.",
+    });
+  } catch (error) {
+    console.error("Error checking shop status:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
 
 
 
