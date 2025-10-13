@@ -185,19 +185,19 @@ router.put("/progressRequest", authMiddleWare, async (req, res) => {
 });
 router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) => {
   const { requests, type } = req.body;
-  const { id } = req.user;
+  const { id } = req.user; 
 
   try {
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
-    const shop = await ShopDetails.findOne({owner: id});
+    const shop = await ShopDetails.findOne({ owner: id });
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-    
+    // if shop is already blocked
     if (shop.isBlocked) {
       return res.status(403).json({
         success: false,
@@ -212,13 +212,13 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
       // if this increment reaches 5, block the shop
       if (shop.cancelRequest + 1 >= 5) {
         updateData.isBlocked = true;
-        updateData.cancelRequestDate = new Date(); 
+        updateData.cancelRequestDate = new Date();
       }
 
-    
-      const updatedShop = await ShopDetails.findByIdAndUpdate(id, updateData, { new: true });
+      // ✅ FIXED: use shop._id instead of user id
+      const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateData, { new: true });
 
-    
+      // show warning if 3–4 cancellations
       if (updatedShop.cancelRequest >= 3 && updatedShop.cancelRequest < 5) {
         return res.status(200).json({
           warning: true,
@@ -227,7 +227,7 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
         });
       }
 
-      // Return blocked message if reached 5
+      // return blocked message if reached 5
       if (updatedShop.isBlocked) {
         return res.status(403).json({
           success: false,
@@ -236,7 +236,7 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
       }
     }
 
-    // Mark orders as deleted if limit not reached
+    // mark orders as deleted if limit is below 5
     for (const reqData of requests) {
       await Requests.findByIdAndUpdate(reqData._id, { status: "deleted" }, { new: true });
     }
@@ -251,6 +251,7 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 
 
