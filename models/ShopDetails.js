@@ -51,6 +51,9 @@ const shopDetailSchema = new mongoose.Schema({
   status: { type: String, default: "pending" },
   isLive: { type: Boolean, default : false },
    socketId: { type: String, default: null },
+      cancelRequest: { type: Number, default: 0 },
+     isBlocked: { type: Boolean, default : false },
+     blockedRequestDate: { type: Date, default: null },
    
 
   reviews: [reviewSchema],

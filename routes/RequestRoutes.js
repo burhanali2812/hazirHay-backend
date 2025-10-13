@@ -184,32 +184,75 @@ router.put("/progressRequest", authMiddleWare, async (req, res) => {
   }
 });
 router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) => {
-  const { requests } = req.body;
+  const { requests, type } = req.body;
+  const { id } = req.user;
 
   try {
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
-
-    for (const reqData of requests) {
-      const updatedOrder = await Requests.findByIdAndUpdate(
-        reqData._id,
-        { status: "deleted" },
-        { new: true }
-      );
+    const shop = await ShopDetails.findById(id);
+    if (!shop) {
+      return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
+    
+    if (shop.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your shop is temporarily blocked due to repeated cancellations",
+      });
+    }
+
+    if (type === "cancel") {
+      // prepare update object
+      let updateData = { $inc: { cancelRequest: 1 } };
+
+      // if this increment reaches 5, block the shop
+      if (shop.cancelRequest + 1 >= 5) {
+        updateData.isBlocked = true;
+        updateData.cancelRequestDate = new Date(); 
+      }
+
+    
+      const updatedShop = await ShopDetails.findByIdAndUpdate(id, updateData, { new: true });
+
+    
+      if (updatedShop.cancelRequest >= 3 && updatedShop.cancelRequest < 5) {
+        return res.status(200).json({
+          warning: true,
+          message: `Warning: You have cancelled ${updatedShop.cancelRequest} orders. After 5, your shop will be blocked for 7 days.`,
+          currentCount: updatedShop.cancelRequest,
+        });
+      }
+
+      // Return blocked message if reached 5
+      if (updatedShop.isBlocked) {
+        return res.status(403).json({
+          success: false,
+          message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
+        });
+      }
+    }
+
+    // Mark orders as deleted if limit not reached
+    for (const reqData of requests) {
+      await Requests.findByIdAndUpdate(reqData._id, { status: "deleted" }, { new: true });
+    }
 
     res.status(200).json({
       success: true,
       message: "Orders deleted successfully",
     });
+
   } catch (error) {
     console.error("Error in deleting orders:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
+
 
 router.get("/getAllRequests", authMiddleWare, async (req, res) => {
 
