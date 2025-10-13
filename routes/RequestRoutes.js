@@ -188,70 +188,82 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
   const { id } = req.user; 
 
   try {
+    // 1️⃣ Validate requests
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
+    // 2️⃣ Find the shop
     const shop = await ShopDetails.findOne({ owner: id });
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-    // if shop is already blocked
+    // 3️⃣ Check if shop is already blocked
     if (shop.isBlocked) {
       return res.status(403).json({
         success: false,
-        message: "Your shop is temporarily blocked due to repeated cancellations",
+        message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
       });
     }
 
     if (type === "cancel") {
-      // prepare update object
+      // 4️⃣ Increment cancelRequest
       let updateData = { $inc: { cancelRequest: 1 } };
 
-      // if this increment reaches 5, block the shop
+      // Block shop if limit reaches 5
       if (shop.cancelRequest + 1 >= 5) {
         updateData.isBlocked = true;
         updateData.cancelRequestDate = new Date();
       }
 
-      // ✅ FIXED: use shop._id instead of user id
       const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateData, { new: true });
 
-      // show warning if 3–4 cancellations
-      if (updatedShop.cancelRequest >= 4 && updatedShop.cancelRequest < 5) {
+      // 5️⃣ Return warning at 4 cancellations
+      if (updatedShop.cancelRequest === 4) {
+        // delete orders as well
+        await Promise.all(
+          requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
+        );
+
         return res.status(200).json({
           success: true,
           warning: true,
-          message: `Warning: You have cancelled ${updatedShop.cancelRequest} orders. After 5, your shop will be blocked for 7 days.`,
+          message: `Warning: You have cancelled ${updatedShop.cancelRequest} orders. After 5, your shop will be temporarily restricted for 7 days.`,
           currentCount: updatedShop.cancelRequest,
         });
       }
 
-      // return blocked message if reached 5
+      // 6️⃣ Return blocked message if limit reached
       if (updatedShop.isBlocked) {
         return res.status(403).json({
           success: false,
           message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
         });
       }
+
+      // 7️⃣ Delete orders if shop is not blocked
+      await Promise.all(
+        requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
+      );
+
+      // 8️⃣ Return normal success
+      return res.status(200).json({
+        success: true,
+        message: "Orders deleted successfully",
+        currentCount: updatedShop.cancelRequest,
+      });
     }
 
-    // mark orders as deleted if limit is below 5
-    for (const reqData of requests) {
-      await Requests.findByIdAndUpdate(reqData._id, { status: "deleted" }, { new: true });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Orders deleted successfully",
-    });
+    // 9️⃣ Invalid type
+    return res.status(400).json({ success: false, message: "Invalid request type" });
 
   } catch (error) {
     console.error("Error in deleting orders:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 
 
