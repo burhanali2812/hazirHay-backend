@@ -219,8 +219,9 @@ router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) =>
       const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateData, { new: true });
 
       // show warning if 3–4 cancellations
-      if (updatedShop.cancelRequest >= 3 && updatedShop.cancelRequest < 5) {
+      if (updatedShop.cancelRequest >= 4 && updatedShop.cancelRequest < 5) {
         return res.status(200).json({
+          success: true,
           warning: true,
           message: `Warning: You have cancelled ${updatedShop.cancelRequest} orders. After 5, your shop will be blocked for 7 days.`,
           currentCount: updatedShop.cancelRequest,
