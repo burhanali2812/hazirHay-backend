@@ -272,9 +272,9 @@ router.put("/resetCancelCount/:id",  async (req, res) => {
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
-    shop.cancelRequest = 5;
-    shop.isBlocked = true;
-    shop.blockedRequestDate = Date.now();
+    shop.cancelRequest = 0;
+    shop.isBlocked = false;
+    shop.blockedRequestDate = null;
     await shop.save();
     res.status(200).json({ success: true, message: "Cancel count reset and shop unblocked if it was blocked." });
   } catch (error) {
