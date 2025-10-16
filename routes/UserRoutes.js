@@ -92,26 +92,40 @@ router.get("/getUserById/:id", authMiddleWare, async (req, res) => {
 });
 router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
-  const { name , coordinates , area } = req.body;
+  const { name, coordinates, area } = req.body;
 
   try {
+  
     const user = await User.findById(id);
-
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    user.location.push({
-       name,
+
+    user.location.forEach((loc) => (loc.isDefault = false));
+
+    const newLocation = {
+      name,
       coordinates,
-      area
-    })
+      area,
+      isDefault: true,
+    };
+
+    user.location.push(newLocation);
     await user.save();
 
-    res.status(200).json({ success: true, message: "Location added successfully", user });
+    res.status(200).json({
+      success: true,
+      message: "New default location added successfully",
+      locations: user.location,
+    });
   } catch (error) {
     console.error("Error saving user location:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error while adding location" });
   }
 });
 
@@ -131,6 +145,7 @@ router.delete("/deleteUserLocation/:id", authMiddleWare, async (req, res) => {
     user.location = user.location.filter(
       (loc) => loc._id.toString() !== locationId
     );
+    
 
     await user.save();
 
@@ -140,6 +155,40 @@ router.delete("/deleteUserLocation/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+router.put("/setDefaultLocation/:id", authMiddleWare, async (req, res) => {
+  try {
+    const locationId = req.params.id;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // remove default from all locations
+    user.location.forEach((loc) => (loc.isDefault = false));
+
+    // set selected location as default
+    const locationToSet = user.location.id(locationId);
+    if (!locationToSet) {
+      return res.status(404).json({ success: false, message: "Location not found" });
+    }
+    locationToSet.isDefault = true;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Default location updated successfully",
+      locations: user.location,
+    });
+  } catch (error) {
+    console.error("Error setting default location:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 
 

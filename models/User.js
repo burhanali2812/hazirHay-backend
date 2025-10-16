@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
 
     area :{
       type: String,
+    },
+    isDefault : {
+      type: Boolean,
+      default : false,
     }
   }]
 
