@@ -95,31 +95,34 @@ router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
   const { name, coordinates, area } = req.body;
 
   try {
-  
     const user = await User.findById(id);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-
+    // remove default from all
     user.location.forEach((loc) => (loc.isDefault = false));
 
-    const newLocation = {
+    // add new one as default
+    user.location.push({
       name,
       coordinates,
       area,
       isDefault: true,
-    };
+      createdAt: new Date(),
+    });
 
-    user.location.push(newLocation);
     await user.save();
+
+    // sort locations by createdAt descending
+    const sortedLocations = [...user.location].sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
 
     res.status(200).json({
       success: true,
       message: "New default location added successfully",
-      locations: user.location,
+      locations: sortedLocations,
     });
   } catch (error) {
     console.error("Error saving user location:", error);
@@ -128,6 +131,7 @@ router.post("/addUserLocation/:id", authMiddleWare, async (req, res) => {
       .json({ success: false, message: "Server error while adding location" });
   }
 });
+
 
 router.delete("/deleteUserLocation/:id", authMiddleWare, async (req, res) => {
   const locationId = req.params.id;
