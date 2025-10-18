@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const workerSchema = new mongoose.Schema({
   name: String,
-  email: { type: String, unique: true },
   password: String,
   profilePicture: { type: String, required: true },
   phone: { type: String, required: true },
