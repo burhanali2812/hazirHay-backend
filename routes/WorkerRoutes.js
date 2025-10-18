@@ -6,6 +6,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const path = require("path");
 const Worker = require("../models/Worker");
+const ShopDetails = require("../models/ShopDetails")
 const authMiddleWare = require("../authMiddleWare");
 
 // multer Setup for profile picture upload ---
@@ -21,38 +22,46 @@ const upload = multer({ storage });
 
 // save Worker Route ---
 router.post(
-  "/saveWorker/:shopId",
+  "/saveWorker",
   authMiddleWare,
-  upload.single("profilePicture"), 
+  upload.single("profilePicture"),
   async (req, res) => {
     try {
-      const { shopId } = req.params; 
-      const shopOwnerId = req.user._id; 
-      const { name, email, phone, role } = req.body;
+      const shopOwnerId = req.user._id;
+      const { name, phone } = req.body;
+      const cleanPhone = phone.trim();
 
-   
-      const alreadyExist = await Worker.findOne({ email, shopOwnerId });
+ 
+      const alreadyExist = await Worker.findOne({ phone: cleanPhone, shopOwnerId });
       if (alreadyExist) {
         return res.status(400).json({
           success: false,
-          message: "Email already registered for this shop.",
+          message: "Phone already registered for this shop.",
+        });
+      }
+
+
+      const shop = await ShopDetails.findOne({ owner: shopOwnerId });
+      if (!shop) {
+        return res.status(404).json({
+          success: false,
+          message: "Shop not found.",
         });
       }
 
 
       const genSalt = await bcrypt.genSalt(10);
-      const hashPassword = await bcrypt.hash(phone, genSalt);
+      const hashPassword = await bcrypt.hash(cleanPhone, genSalt);
 
- 
+    
       const worker = new Worker({
         name,
-        email,
-        phone,
+        phone: cleanPhone,
         password: hashPassword,
-        role: role || "worker",
-        shopId,
+        role: "worker",
+        shopId: shop._id,
         shopOwnerId,
-        profilePicture: req.file ? req.file.path : "", 
+        profilePicture: req.file ? req.file.path : "",
       });
 
       await worker.save();
@@ -63,8 +72,9 @@ router.post(
         worker: {
           id: worker._id,
           name: worker.name,
-          email: worker.email,
           phone: worker.phone,
+          profilePicture: worker.profilePicture,
+          loginDetails: { phone: worker.phone, password: phone },
         },
       });
     } catch (error) {
@@ -73,5 +83,6 @@ router.post(
     }
   }
 );
+
 
 module.exports = router;
