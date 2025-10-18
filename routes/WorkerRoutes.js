@@ -84,5 +84,34 @@ router.post(
   }
 );
 
+router.get("/getWorkersByShop", authMiddleWare, async (req, res) => {
+  try {
+    const shopOwnerId = req.user.id;
+
+    
+    const workers = await Worker.find({ shopOwnerId }).select("-password");
+
+    if (workers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No workers found for this shop",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Workers fetched successfully",
+      workers,
+    });
+  } catch (error) {
+    console.error("Error fetching workers:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching workers",
+    });
+  }
+});
+
+
 
 module.exports = router;
