@@ -20,14 +20,14 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// save Worker Route ---
+
 router.post(
   "/saveWorker",
   authMiddleWare,
   upload.single("profilePicture"),
   async (req, res) => {
     try {
-      const shopOwnerId = req.user._id;
+      const shopOwnerId = req.user.id;
       const { name, phone } = req.body;
       const cleanPhone = phone.trim();
 
