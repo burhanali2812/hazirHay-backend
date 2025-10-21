@@ -5,6 +5,19 @@ const requestSchema = new mongoose.Schema({
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopDetails", required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   shopOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopKeeper", required: true },
+    orderAssignment: {
+   workerId : {
+      type: mongoose.Schema.Types.ObjectId,
+    ref: "Worker",
+    default: null, 
+   },
+   assignedAt :{
+     type: Date, default: Date.now 
+   },
+   status:{
+    type: String
+   }
+  },
    location: [{
     coordinates: {
       type: [Number],
@@ -26,7 +39,7 @@ const requestSchema = new mongoose.Schema({
   orderId: { type: String, required: true ,unique: true},
   cost: { type: Number, required: true },
   bonus: { type: Number, required: false, default: 0 },
-  status: { type: String, enum: ["pending", "accepted", "rejected","completed","inProgress","deleted"], default: "pending" },
+  status: { type: String, enum: ["pending", "accepted", "rejected","completed","inProgress","deleted","assigned"], default: "pending" },
   createdAt: { type: Date, default: Date.now }
 });
 

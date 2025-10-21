@@ -347,6 +347,38 @@ router.get("/getshopRequest/:id", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+router.put("/assignMultiple", async (req, res) => {
+  const { selectedWorkers } = req.body;
+
+  try {
+    const updates = Object.entries(selectedWorkers).map(([orderId, worker]) => {
+      const workerId = worker._id; 
+
+      return Request.findByIdAndUpdate(
+        orderId,
+        {
+          $set: {
+            "orderAssignment.workerId": workerId,
+            "orderAssignment.assignedAt": new Date(),
+            "orderAssignment.status": "assigned",
+            status: "assigned"
+          },
+        },
+        { new: true }
+      );
+    });
+
+    await Promise.all(updates);
+
+    res.status(200).json({
+      success: true,
+      message: "All workers assigned successfully!",
+    });
+  } catch (error) {
+    console.error("Bulk assignment failed:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 
 module.exports = router;
