@@ -205,6 +205,7 @@ router.post("/", async (req, res) => {
       { expiresIn: "1d" }
     );
     await model.updateOne({ email: account.email }, { $inc: { activityCount: 1 } });
+    account.password = undefined;
 
     return res.status(200).json({
       success: true,

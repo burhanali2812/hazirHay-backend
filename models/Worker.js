@@ -8,6 +8,7 @@ const workerSchema = new mongoose.Schema({
   role: { type: String, default: "worker" },
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopDetails" },
   shopOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: "Shopkeeper" },
+   isBusy: { type: Boolean, default : false },
   location: {
     coordinates: {
       type: [Number],

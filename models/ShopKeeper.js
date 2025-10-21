@@ -14,7 +14,14 @@ const shopKeeperSchema = new mongoose.Schema({
   isBusy: { type: Boolean, default : false },
   isShop: { type: Boolean, default : false },
   isLive: { type: Boolean, default : false },
-
+  location: {
+    coordinates: {
+      type: [Number],
+    },
+    area: {
+      type: String,
+    },
+  },
   createdAt: { type: Date, default: Date.now },
   activityCount: { type: Number, default: 0 },
 
