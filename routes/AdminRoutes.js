@@ -184,7 +184,7 @@ router.post("/", async (req, res) => {
     const { model, label } = roleData;
     const finalUser = role === "worker" ? "phone" : "email";
 
-    const account = await model.findOne({ finalUser });
+    const account = await model.findOne({ finalUser : email });
     if (!account) {
       return res
         .status(400)
