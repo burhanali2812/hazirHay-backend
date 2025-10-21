@@ -354,7 +354,7 @@ router.put("/assignMultiple", async (req, res) => {
     const updates = Object.entries(selectedWorkers).map(([orderId, worker]) => {
       const workerId = worker._id; 
 
-      return Request.findByIdAndUpdate(
+      return Requests.findByIdAndUpdate(
         orderId,
         {
           $set: {
