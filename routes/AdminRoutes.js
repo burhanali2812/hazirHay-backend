@@ -182,13 +182,13 @@ router.post("/", async (req, res) => {
     }
 
     const { model, label } = roleData;
-    const finalUser = role === "worker" ? phone : email;
+    const finalUser = role === "worker" ? "phone" : "email";
 
     const account = await model.findOne({ finalUser });
     if (!account) {
       return res
         .status(400)
-        .json({ success: false, message: `${label} not found on this email` });
+        .json({ success: false, message: `${label} not found on this ${finalUser}` });
     }
 
     const isMatch = await bcrypt.compare(password, account.password);
