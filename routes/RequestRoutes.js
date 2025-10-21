@@ -380,5 +380,29 @@ router.put("/assignMultiple", async (req, res) => {
   }
 });
 
+router.get("/getAssignedOrder/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const requests = await Requests.find({ "orderAssignment.workerId": id })
+      .populate("userId", "name phone email profilePicture")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!requests || requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No requests found for this worker",
+      });
+    }
+
+    res.status(200).json({ success: true, message: "requests found for this worker", data: requests });
+  } catch (error) {
+    console.error("Error fetching worker requests:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 
 module.exports = router;
