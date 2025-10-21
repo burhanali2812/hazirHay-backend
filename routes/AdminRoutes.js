@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Admin = require("../models/Admin");
 const jwt = require("jsonwebtoken");
 const ShopKepper = require("../models/ShopKeeper");
+const Worker = require("../models/Worker")
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const authMiddleWare = require("../authMiddleWare");
@@ -27,6 +28,7 @@ const roleModelMap = {
   admin: { model: Admin, label: "Admin" },
   user: { model: User, label: "User" },
   shopKepper: { model: ShopKepper, label: "ShopKepper" },
+  worker: { model: Worker, label: "Worker" },
 };
 router.post(
   "/saveUser",
