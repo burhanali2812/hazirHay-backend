@@ -183,9 +183,9 @@ router.put("/progressRequest", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-router.put("/markDeleteRequestByShopkeeper", authMiddleWare, async (req, res) => {
+router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res) => {
   const { requests, type } = req.body;
-  const { id } = req.user; 
+  const { id } = req.params; 
 
   try {
     // 1️⃣ Validate requests
