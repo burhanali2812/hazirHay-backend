@@ -403,6 +403,43 @@ router.get("/getAssignedOrder/:id", authMiddleWare, async (req, res) => {
   }
 });
 
+router.put("/unAssignOrder/:id", authMiddleWare, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const updated = await Requests.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          "orderAssignment.workerId": null,
+          "orderAssignment.assignedAt": null,
+          "orderAssignment.status": "",
+          status: "pending",
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order unassigned successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Error unassigning order:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+});
+
+
 
 
 module.exports = router;
