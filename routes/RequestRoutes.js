@@ -384,7 +384,7 @@ router.get("/getAssignedOrder/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const requests = await Requests.find({ "orderAssignment.workerId": id })
+    const requests = await Requests.find({ "orderAssignment.workerId": id, status: "assigned" })
       .populate("userId", "name phone email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
