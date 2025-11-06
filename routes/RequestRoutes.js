@@ -188,18 +188,18 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
   const { id } = req.params; 
 
   try {
-    // 1️⃣ Validate requests
+    // 1 Validate requests
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
-    // 2️⃣ Find the shop
+    // 2 Find the shop
     const shop = await ShopDetails.findOne({ owner: id });
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-    // 3️⃣ Check if shop is already blocked
+    // 3 Check if shop is already blocked
     if (shop.isBlocked) {
       return res.status(403).json({
         success: false,
@@ -208,7 +208,7 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
     }
 
     if (type === "cancel") {
-      // 4️⃣ Increment cancelRequest
+      // 4 Increment cancelRequest
       let updateData = { $inc: { cancelRequest: 1 } };
 
       // Block shop if limit reaches 5
@@ -219,7 +219,7 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
 
       const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateData, { new: true });
 
-      // 5️⃣ Return warning at 4 cancellations
+      // 5 Return warning at 4 cancellations
       if (updatedShop.cancelRequest === 4) {
         // delete orders as well
         await Promise.all(
@@ -234,7 +234,7 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
         });
       }
 
-      // 6️⃣ Return blocked message if limit reached
+      // 6 Return blocked message if limit reached
       if (updatedShop.isBlocked) {
         return res.status(403).json({
           success: false,
@@ -242,12 +242,12 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
         });
       }
 
-      // 7️⃣ Delete orders if shop is not blocked
+      // 7 Delete orders if shop is not blocked
       await Promise.all(
         requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
       );
 
-      // 8️⃣ Return normal success
+      // 8 Return normal success
       return res.status(200).json({
         success: true,
         message: "Orders deleted successfully",
@@ -255,7 +255,7 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
       });
     }
 
-    // 9️⃣ Invalid type
+    // 9 Invalid type
     return res.status(400).json({ success: false, message: "Invalid request type" });
 
   } catch (error) {
