@@ -111,6 +111,54 @@ router.get("/getWorkersByShop", authMiddleWare, async (req, res) => {
     });
   }
 });
+router.put("/updateLiveLocation/:workerId", authMiddleWare,async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    if (lat == null || lng == null) {
+      return res.status(400).json({ message: "lat and lng are required" });
+    }
+
+    const worker = await Worker.findByIdAndUpdate(
+      req.params.workerId,
+      {
+        $set: {
+          "location.coordinates": [lat, lng], 
+        },
+      },
+      { new: true }
+    );
+
+    if (!worker) {
+      return res.status(404).json({ message: "worker not found" });
+    }
+res.json({
+  success: true,
+  message: "Coordinates updated successfully",
+  coordinates: worker.location.coordinates,
+});
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({success : false, message: "Server error" });
+  }
+});
+router.get("/getLiveLocation/:workerId",authMiddleWare, async (req, res) => {
+  try {
+    const worker = await Worker.findById(req.params.workerId).select("location.coordinates");
+    if (!worker) {
+      return res.status(404).json({ message: "Worker not found" });
+    }
+
+    res.json({
+      success : true,
+      message: "live coordinates found", 
+      coordinates: worker.location.coordinates, 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success : false,message: "Server error" });
+  }
+});
 
 
 
