@@ -87,7 +87,7 @@ router.post(
 
   async (req, res) => {
     const id = req.params.id;
-    let { shopName, shopAddress, license, coordinates, area, services } =
+    let { shopName, shopAddress, coordinates, area, services } =
       req.body;
 
     if (typeof coordinates === "string") {
@@ -109,20 +109,12 @@ router.post(
           .json({ success: false, message: "Invalid services format" });
       }
     }
-    const licenseExist = await ShopDetails.findOne({ license });
-    if (licenseExist) {
-      return res.status(400).json({
-        success: false,
-        message: "Already shop exist on this license",
-      });
-    }
 
     try {
       const shop = new ShopDetails({
         owner: id,
         shopName,
         shopAddress,
-        license,
         shopPicture: req.file?.path || "",
         location: {
           type: "Point",
