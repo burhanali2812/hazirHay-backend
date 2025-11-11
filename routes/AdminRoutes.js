@@ -87,7 +87,7 @@ router.post(
 
   async (req, res) => {
     const id = req.params.id;
-    let { shopName, shopAddress, coordinates, area, services } =
+    let { shopName, shopAddress,  coordinates, area, services } =
       req.body;
 
     if (typeof coordinates === "string") {
@@ -109,6 +109,17 @@ router.post(
           .json({ success: false, message: "Invalid services format" });
       }
     }
+const shopExist = await ShopDetails.findOne({
+  name: { $regex: `^${shopName}$`, $options: "i" }
+});
+
+if (shopExist) {
+  return res.status(400).json({
+    success: false,
+    message: "Shop with this name already exists",
+  });
+}
+
 
     try {
       const shop = new ShopDetails({
