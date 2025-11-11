@@ -414,7 +414,7 @@ router.put("/unAssignOrder/:id", authMiddleWare, async (req, res) => {
           "orderAssignment.workerId": null,
           "orderAssignment.assignedAt": null,
           "orderAssignment.status": "",
-          status: "accepted",
+          status: "unAssigned",
         },
       },
       { new: true }
