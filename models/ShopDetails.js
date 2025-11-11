@@ -26,8 +26,7 @@ const shopDetailSchema = new mongoose.Schema({
   },
   shopName: { type: String, required: true },
   shopAddress: { type: String, required: true },
-  license: { type: String, required: true },
-  shopPicture: { type: String, required: true },
+  shopPicture: { type: String, },
 
   location: {
     type: {
@@ -50,7 +49,6 @@ const shopDetailSchema = new mongoose.Schema({
 
   status: { type: String, default: "pending" },
   isLive: { type: Boolean, default : false },
-   socketId: { type: String, default: null },
       cancelRequest: { type: Number, default: 0 },
      isBlocked: { type: Boolean, default : false },
      blockedRequestDate: { type: Date, default: null },

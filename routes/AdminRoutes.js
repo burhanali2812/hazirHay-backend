@@ -32,7 +32,7 @@ const roleModelMap = {
 };
 router.post(
   "/saveUser",
-  upload.fields([{ name: "profilePicture" }, { name: "verificationDocument" }]),
+  upload.fields([{ name: "profilePicture" }]),
   async (req, res) => {
     try {
       const { name, email, password, phone, cnic, address, role } = req.body;
@@ -62,9 +62,7 @@ router.post(
         address,
         profilePicture: req.files?.profilePicture?.[0]?.path || "",
         ...(role === "shopKepper" && {
-          cnic,
-          verificationDocument:
-            req.files?.verificationDocument?.[0]?.path || "",
+          cnic
         }),
       });
 
