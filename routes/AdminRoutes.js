@@ -110,7 +110,7 @@ router.post(
       }
     }
 const shopExist = await ShopDetails.findOne({
-  name: { $regex: `^${shopName}$`, $options: "i" }
+  shopName: { $regex: `^${shopName}$`, $options: "i" }
 });
 
 if (shopExist) {
