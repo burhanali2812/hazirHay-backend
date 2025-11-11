@@ -119,6 +119,15 @@ if (shopExist) {
     message: "Shop with this name already exists",
   });
 }
+const shopwithkepperExist = await ShopDetails.findOne({ owner: id });
+
+if (shopwithkepperExist) {
+  return res.status(400).json({
+    success: false,
+    message: "This user already owns a shop",
+  });
+}
+
 
 
     try {
