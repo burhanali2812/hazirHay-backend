@@ -1,78 +1,58 @@
-const mongoose = require("mongoose");
-const express = require("express");
-const cors = require("cors");
+const mongoose = require("mongoose")
+const express = require("express")
+const cors = require("cors")
 require("dotenv").config();
-
-const AdminRoutes = require("./routes/AdminRoutes");
-const ShopKepperRoutes = require("./routes/ShopKepperRoutes");
-const UserRoutes = require("./routes/UserRoutes");
-const ShopRoutes = require("./routes/ShopsRoutes");
-const RequestRoutes = require("./routes/RequestRoutes");
-const Cart = require("./routes/CartRoutes");
-const Notification = require("./routes/NotificationRoutes");
-const Worker = require("./routes/WorkerRoutes");
-const Transactions = require("./routes/TransactionRoutes");
+const AdminRoutes = require("./routes/AdminRoutes")
+const ShopKepperRoutes = require("./routes/ShopKepperRoutes")
+const UserRoutes = require("./routes/UserRoutes")
+const ShopRoutes = require("./routes/ShopsRoutes")
+const RequestRoutes = require("./routes/RequestRoutes")
+const Cart = require("./routes/CartRoutes")
+const Notification = require("./routes/NotificationRoutes")
+const Worker = require("./routes/WorkerRoutes")
+const Transactions = require("./routes/TransactionRoutes")
 const http = require("http");
+const path = require("path");
 const { initSocket } = require("./socket");
 
 const app = express();
+app.use(cors());
+app.use(express.json())
 
-// ===== CORS CONFIG =====
-const allowedOrigins = [
-    "http://localhost:3001",                  
-    "https://hazir-hay-frontend.vercel.app"  
-];
+const server = http.createServer(app);
 
-app.use(cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-}));
+const PORT = process.env.PORT || 3000;
+app.get("/", (req, res) => {
+  res.send("HazirHay Backend is Live!");
+});
 
-app.options("*", cors());
 
-app.use(express.json());
-
-// ===== ROUTES =====
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000, // 30 seconds timeout
+      socketTimeoutMS: 45000, // 45 seconds socket timeout
+    });
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.error("MongoDB Connection Error:", err);
+    process.exit(1); // Exit process with failure
+  }
+};
+initSocket(server);
 app.use("/admin", AdminRoutes);
 app.use("/shops", ShopRoutes);
 app.use("/shopKeppers", ShopKepperRoutes);
 app.use("/users", UserRoutes);
 app.use("/requests", RequestRoutes);
 app.use("/cart", Cart);
-app.use("/notification", Notification);
-app.use("/worker", Worker);
-app.use("/transactions", Transactions);
-
-
-app.get("/", (req, res) => {
-    res.send("HazirHay Backend is Live!");
-});
-
-
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 30000,
-            socketTimeoutMS: 45000
-        });
-        console.log("MongoDB Connected");
-    } catch (err) {
-        console.error("MongoDB Connection Error:", err);
-        process.exit(1);
-    }
-};
-
-
-const server = http.createServer(app);
-initSocket(server);
-
-
-const PORT = process.env.PORT || 3000;
-connectDB().then(() => {
-    server.listen(PORT, () => {
-        console.log(`Server Running on PORT ${PORT}`);
-    });
-});
+app.use("/notification", Notification)
+app.use("/worker", Worker)
+app.use("/transactions", Transactions)
+connectDB().then(()=>{
+    server.listen(PORT, ()=>{
+        console.log(`Server Running on PORT ${PORT}`)
+    })
+})

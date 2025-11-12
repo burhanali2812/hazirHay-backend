@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authMiddleWare = require("../authMiddleWare");
 
-const Transaction = require("../models/Transaction");
+const Transaction = require("../models/Transactions");
 
 router.post("/createTransaction", authMiddleWare, async (req, res) => {
   try {
