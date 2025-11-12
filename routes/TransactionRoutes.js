@@ -20,7 +20,7 @@ router.post("/createTransaction", authMiddleWare, async (req, res) => {
     const shopkeeperId = firstOrder.shopOwnerId;
     const workerId = firstOrder.orderAssignment.workerId;
     const customerId = firstOrder.userId._id;
-    const deliveryCharge = Number(firstOrder.serviceCharges.distance) * Number(firstOrder.serviceCharges.perKmRate);
+    const deliveryCharge = Number(firstOrder.serviceCharges.distance) * Number(firstOrder.serviceCharges.rate);
 
     const orderIds = transactionData.map((order) => order._id);
 
