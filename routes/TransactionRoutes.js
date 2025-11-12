@@ -60,8 +60,8 @@ router.get("/getTransactionsByShopkeeper/:shopkeeperId", authMiddleWare, async (
     try {
         const { shopkeeperId } = req.params;
         const transactions = await Transaction.find({ shopkeeperId })
-            .populate("workerId", "name phone") // populate worker details
-            .populate("orderId", " amount"); // populate order details
+            .populate("workerId", "name phone") 
+            .populate("customerId", "name phone"); 
         res.status(200).json({
             success: true,
             message: "Transactions fetched successfully",
