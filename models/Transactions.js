@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema({
   shopkeeperId: {
@@ -31,7 +31,7 @@ const transactionSchema = new mongoose.Schema({
     type: Number,
     default: 0, 
   },
-    totalPayable: {
+  totalPayable: {
     type: Number,
     required: true, 
   },
@@ -41,4 +41,4 @@ const transactionSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("Transaction", transactionSchema);
+module.exports = mongoose.model("Transaction", transactionSchema);
