@@ -162,7 +162,7 @@ router.get("/getLiveLocation/:workerId",authMiddleWare, async (req, res) => {
 
 router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
   try {
-    const id = req.params;
+    const { id } = req.params;
 
     const workers = await Worker.findByIdAndDelete(id);
 
