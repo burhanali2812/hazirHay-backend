@@ -214,10 +214,11 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
 
     // Shop blocked?
     if (shop.isBlocked) {
-      return res.status(403).json({
-        success: false,
-        message: "Your shop is blocked for 7 days due to exceeding cancellation limit.",
-      });
+        return res.status(403).json({
+          success: false,
+          blocked: true,
+          message: "Your shop has been blocked for 7 days due to too many cancellations.",
+        });
     }
 
     // Bulk operations array
