@@ -160,7 +160,7 @@ router.get("/getLiveLocation/:workerId",authMiddleWare, async (req, res) => {
   }
 });
 
-router.get("/deleteWorker/:id", authMiddleWare, async (req, res) => {
+router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
   try {
     const id = req.params;
 
