@@ -89,7 +89,7 @@ router.get("/getWorkersByShop", authMiddleWare, async (req, res) => {
     const shopOwnerId = req.user.id;
 
     
-    const workers = await Worker.find({ shopOwnerId }).select("-password");
+    const workers = await Worker.find({ shopOwnerId }).select("-password").sort({ createdAt: -1 });
 
     if (workers.length === 0) {
       return res.status(404).json({
@@ -157,6 +157,32 @@ router.get("/getLiveLocation/:workerId",authMiddleWare, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success : false,message: "Server error" });
+  }
+});
+
+router.get("/deleteWorker/:id", authMiddleWare, async (req, res) => {
+  try {
+    const id = req.params;
+
+    const workers = await Worker.findByIdAndDelete(id);
+
+    if (workers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No workers found for this shop",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Worker deleted successfully",
+      workers,
+    });
+  } catch (error) {
+    console.error("Error deleting workers:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting workers",
+    });
   }
 });
 
