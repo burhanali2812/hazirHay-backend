@@ -9,6 +9,7 @@ const workerSchema = new mongoose.Schema({
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopDetails" },
   shopOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: "Shopkeeper" },
    isBusy: { type: Boolean, default : false },
+   orderCount: { type: Number, default: 0 },
   location: {
     coordinates: {
       type: [Number],

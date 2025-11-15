@@ -1,5 +1,6 @@
 const ShopDetails = require("../models/ShopDetails");
 const Requests = require("../models/Request");
+const Worker = require("../models/Worker");
 const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
@@ -130,6 +131,9 @@ router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
 });
 router.put("/completeRequest", authMiddleWare, async (req, res) => {
   const{requests} = req.body;
+  const id = req.user.id;
+
+  await Worker.findByIdAndUpdate(id, { isBusy: false }, { new: true });
 
   const completed = [];
   try {
@@ -152,12 +156,20 @@ router.put("/completeRequest", authMiddleWare, async (req, res) => {
 });
 router.put("/progressRequest", authMiddleWare, async (req, res) => {
   const { requests } = req.body;
+  const id = req.user.id;
 
   try {
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
-
+await Worker.findByIdAndUpdate(
+  id,
+  { 
+    $inc: { orderCount: requests.length }, 
+    $set: { isBusy: true } 
+  },
+  { new: true }
+);
     const progressedOrders = [];
 
     for (const reqData of requests) {
@@ -208,11 +220,16 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
     }
 
     if (type === "cancel") {
+      await Worker.findByIdAndUpdate(
+        id,
+        { isBusy: false },
+        { new: true }
+      );
       // 4 Increment cancelRequest
       let updateData = { $inc: { cancelRequest: 1 } };
 
       // Block shop if limit reaches 5
-      if (shop.cancelRequest + 1 >= 5) {
+      if (shop.cancelRequest + 1 >= 6) {
         updateData.isBlocked = true;
         updateData.cancelRequestDate = new Date();
       }
@@ -241,20 +258,18 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
           message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
         });
       }
-
-      // 7 Delete orders if shop is not blocked
+    }
+    if(type === "cancel" || type === "delete"){
+      // 7 Delete orders
       await Promise.all(
         requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
       );
-
-      // 8 Return normal success
+      // 8 Success response
       return res.status(200).json({
         success: true,
-        message: "Orders deleted successfully",
-        currentCount: updatedShop.cancelRequest,
+        message: `Orders ${type === "cancel" ? "cancelled" : "deleted"} successfully`,
       });
     }
-
     // 9 Invalid type
     return res.status(400).json({ success: false, message: "Invalid request type" });
 
