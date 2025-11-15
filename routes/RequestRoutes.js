@@ -197,87 +197,114 @@ await Worker.findByIdAndUpdate(
 });
 router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res) => {
   const { requests, type } = req.body;
-  const { id } = req.params; 
+  const { id } = req.params;
+  const workerId = req.user.id;
 
   try {
-    // 1 Validate requests
+    // Validate
     if (!requests || requests.length === 0) {
       return res.status(400).json({ success: false, message: "No requests provided" });
     }
 
-    // 2 Find the shop
+    // Fetch shop
     const shop = await ShopDetails.findOne({ owner: id });
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-    // 3 Check if shop is already blocked
+    // Shop blocked?
     if (shop.isBlocked) {
       return res.status(403).json({
         success: false,
-        message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
+        message: "Your shop is blocked for 7 days due to exceeding cancellation limit.",
       });
     }
 
-    if (type === "cancel") {
-      await Worker.findByIdAndUpdate(
-        id,
-        { isBusy: false },
-        { new: true }
-      );
-      // 4 Increment cancelRequest
-      let updateData = { $inc: { cancelRequest: 1 } };
+    // Bulk operations array
+    let bulkOps = [];
 
-      // Block shop if limit reaches 5
-      if (shop.cancelRequest + 1 >= 6) {
-        updateData.isBlocked = true;
-        updateData.cancelRequestDate = new Date();
+    if (type === "cancel") {
+      // Free worker
+      await Worker.findByIdAndUpdate(workerId, { $set: { isBusy: false },  });
+
+      // Reset assignment + revert to assigned
+      requests.forEach((r) => {
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: r._id },
+            update: {
+              $set: {
+                "orderAssignment.workerId": null,
+                "orderAssignment.assignedAt": null,
+                "orderAssignment.status": "",
+                status: "deleted",
+              },
+            },
+          },
+        });
+      });
+
+      // Apply updates
+      await Requests.bulkWrite(bulkOps);
+
+      // Update cancel count
+      let updateShop = { $inc: { cancelRequest: 1 } };
+      let newCancelCount = shop.cancelRequest + 1;
+
+      // Block at >= 5
+      if (newCancelCount >= 5) {
+        updateShop.$set = {
+          isBlocked: true,
+          cancelRequestDate: new Date(),
+        };
       }
 
-      const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateData, { new: true });
+      const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateShop, { new: true });
 
-      // 5 Return warning at 4 cancellations
+      // Warning at 4
       if (updatedShop.cancelRequest === 4) {
-        // delete orders as well
-        await Promise.all(
-          requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
-        );
-
         return res.status(200).json({
           success: true,
           warning: true,
-          message: `Warning: You have cancelled ${updatedShop.cancelRequest} orders. After 5, your shop will be temporarily restricted for 7 days.`,
+          message: "Warning: 4 orders cancelled. At 5 you will be blocked for 7 days.",
           currentCount: updatedShop.cancelRequest,
         });
       }
 
-      // 6 Return blocked message if limit reached
+      // Blocked response
       if (updatedShop.isBlocked) {
         return res.status(403).json({
           success: false,
-          message: "Your shop has been temporarily blocked for 7 days due to exceeding 5 cancellations.",
+          message: "Your shop has been blocked for 7 days due to too many cancellations.",
         });
       }
-    }
-    if(type === "cancel" || type === "delete"){
-      // 7 Delete orders
-      await Promise.all(
-        requests.map((r) => Requests.findByIdAndUpdate(r._id, { status: "deleted" }, { new: true }))
-      );
-      // 8 Success response
+
       return res.status(200).json({
         success: true,
         message: `Orders ${type === "cancel" ? "cancelled" : "deleted"} successfully`,
       });
     }
-    // 9 Invalid type
+
+    if (type === "delete") {
+      await Requests.updateMany(
+        { _id: { $in: requests.map((r) => r._id) }},
+        { $set: { status: "deleted" }}
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: `Orders ${type === "cancel" ? "cancelled" : "deleted"} successfully`,
+      });
+    }
+
     return res.status(400).json({ success: false, message: "Invalid request type" });
 
   } catch (error) {
-    console.error("Error in deleting orders:", error);
+    console.error("Error in marking orders:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
 
 
 
@@ -428,8 +455,8 @@ router.put("/unAssignOrder/:id", authMiddleWare, async (req, res) => {
         $set: {
           "orderAssignment.workerId": null,
           "orderAssignment.assignedAt": null,
-          "orderAssignment.status": "",
-          status: "unAssigned",
+          "orderAssignment.status": "unAssigned",
+          status: "accepted",
         },
       },
       { new: true }
