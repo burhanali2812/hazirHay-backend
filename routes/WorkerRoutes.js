@@ -8,6 +8,7 @@ const path = require("path");
 const Worker = require("../models/Worker");
 const ShopDetails = require("../models/ShopDetails")
 const authMiddleWare = require("../authMiddleWare");
+const axios = require("axios")
 
 // multer Setup for profile picture upload ---
 const storage = new CloudinaryStorage({
@@ -187,7 +188,27 @@ router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
 });
 
 
+router.post("/askAi", async (req, res) => {
+  try {
+    const response = await axios.post(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+      {
+        contents: [{ parts: [{ text: req.body.prompt }] }]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY
+        }
+      }
+    );
 
+    res.json({ answer: response.data });
+  } catch (error) {
+    console.log(error.response?.data || error.message);
+    res.status(500).json({ error: "Gemini request failed" });
+  }
+});
 
 
 module.exports = router;

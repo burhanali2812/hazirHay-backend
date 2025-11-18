@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
-import axios from "axios";
 
-const apiKey = process.env.GEMINI_API_KEY;
 
 const workerSchema = new mongoose.Schema({
  name: { type: String, required: true, trim: true },
@@ -24,27 +22,7 @@ const workerSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-router.post("/ask", async (req, res) => {
-  try {
-    const response = await axios.post(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-      {
-        contents: [{ parts: [{ text: req.body.prompt }] }]
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY
-        }
-      }
-    );
 
-    res.json({ answer: response.data });
-  } catch (error) {
-    console.log(error.response?.data || error.message);
-    res.status(500).json({ error: "Gemini request failed" });
-  }
-});
 
 
 module.exports = mongoose.model("Worker", workerSchema);
