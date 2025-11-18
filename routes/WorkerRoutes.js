@@ -188,7 +188,7 @@ router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
 });
 
 
-router.post("/askAi", async (req, res) => {
+router.post("/askAiWorker", async (req, res) => {
   try {
     const response = await axios.post(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
