@@ -198,7 +198,7 @@ router.post("/askAiWorker", async (req, res) => {
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const response = await axios.post(
       apiUrl, // API Key is now in the query string
