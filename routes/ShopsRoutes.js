@@ -70,8 +70,8 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
     })
       .populate({
         path: "owner",
-        match: { isVerified: true }, // filter by isVerified directly in populate
-        select: "isVerified",        // only fetch the isVerified field
+        match: { isVerified: true }, 
+        select: "isVerified",        
       });
 
   
@@ -238,6 +238,97 @@ router.put("/resetCancelCount/:id",  async (req, res) => {
 }
 
 );
+
+router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { mode, serviceId, category, subCategory } = req.body;
+
+
+    if (mode === "add") {
+      const updatedShop = await ShopDetails.findByIdAndUpdate(
+        shopId,
+        {
+          $push: {
+            servicesOffered: { category, subCategory }
+          }
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "New service added successfully",
+        shop: updatedShop
+      });
+    }
+
+    if (mode === "edit") {
+      if (!serviceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Service ID is required for editing"
+        });
+      }
+
+      const updatedShop = await ShopDetails.findOneAndUpdate(
+        { _id: shopId, "servicesOffered._id": serviceId },
+        {
+          $set: {
+            "servicesOffered.$.category": category,
+            "servicesOffered.$.subCategory": subCategory
+          }
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Service updated successfully",
+        shop: updatedShop
+      });
+    }
+
+    if (mode === "delete") {
+      if (!serviceId) {
+        return res.status(400).json({
+          success: false,
+          message: "Service ID is required for deleting"
+        });
+      }
+
+      const updatedShop = await ShopDetails.findByIdAndUpdate(
+        shopId,
+        {
+          $pull: {
+            servicesOffered: { _id: serviceId }
+          }
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Service deleted successfully",
+        shop: updatedShop
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Invalid mode. Use add, edit, or delete."
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+
 
 
 
