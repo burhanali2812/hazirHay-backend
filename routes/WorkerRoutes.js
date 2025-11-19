@@ -189,23 +189,39 @@ router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
 
 
 router.post("/askAiWorker", async (req, res) => {
+  const prompt = req.body.prompt;
+
+  // 1. Input Validation
+  if (!prompt) {
+    return res.status(400).json({ error: "Missing 'prompt' in request body" });
+  }
+
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
     const response = await axios.post(
-     "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+      apiUrl, // API Key is now in the query string
       {
-        contents: [{ parts: [{ text: req.body.prompt }] }]
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY
-        }
+        contents: [{ parts: [{ text: prompt }] }],
       }
+      // 2. Removed the 'headers' object for the API key
     );
 
-    res.json({ answer: response.data });
+    // 3. Extract the generated text cleanly
+    const generatedText = response.data.candidates?.[0].content.parts?.[0].text;
+    
+    // Check if text was successfully extracted
+    if (generatedText) {
+      res.json({ answer: generatedText });
+    } else {
+      // Handle cases where the API call succeeded but no text was generated
+      console.log("Gemini API response was missing text:", response.data);
+      res.status(500).json({ error: "AI response incomplete." });
+    }
   } catch (error) {
-    console.log(error.response?.data || error.message);
+    // 4. Improved Error Logging
+    console.error("Gemini request failed:", error.response?.data || error.message);
     res.status(500).json({ error: "Gemini request failed" });
   }
 });
