@@ -326,19 +326,20 @@ router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => 
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
+      // Handle picture update
     if (req.file) {
-      if (shop.shopPicture?.public_id) {
-        try {
-          await cloudinary.uploader.destroy(shop.shopPicture.public_id);
-        } catch (err) {
-          console.log("Cloudinary delete failed:", err.message);
+
+      // Delete old image from cloudinary if exists
+      if (shop.shopPicture) {
+        const oldPicture = JSON.parse(shop.shopPicture);   // ← Parse string to object
+        if (oldPicture.public_id) {
+          await cloudinary.uploader.destroy(oldPicture.public_id);
         }
       }
-
-      updates.shopPicture = {
+      updates.shopPicture = JSON.stringify({
         url: req.file.path,
-        public_id: req.file.filename, 
-      };
+        public_id: req.file.filename
+      });
     } else {
       delete updates.shopPicture;
     }
