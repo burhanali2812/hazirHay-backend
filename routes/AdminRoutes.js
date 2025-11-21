@@ -313,22 +313,34 @@ router.get("/reverse-geocode", async (req, res) => {
 router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+
+    let updates = req.body;
+
+    if (updates.location) {
+      updates.location = JSON.parse(updates.location);
+    }
 
     const shop = await ShopDetails.findById(id);
+
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
     if (req.file) {
       if (shop.shopPicture?.public_id) {
-        await cloudinary.uploader.destroy(shop.shopPicture.public_id);
+        try {
+          await cloudinary.uploader.destroy(shop.shopPicture.public_id);
+        } catch (err) {
+          console.log("Cloudinary delete failed:", err.message);
+        }
       }
 
       updates.shopPicture = {
         url: req.file.path,
-        public_id: req.file.filename,
+        public_id: req.file.filename, 
       };
+    } else {
+      delete updates.shopPicture;
     }
 
 
@@ -341,9 +353,10 @@ router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => 
       message: "Shop updated successfully",
       shop: updatedShop,
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 module.exports = router;
