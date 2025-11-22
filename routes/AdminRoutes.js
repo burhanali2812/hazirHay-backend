@@ -310,10 +310,9 @@ router.get("/reverse-geocode", async (req, res) => {
 //   }
 // });
 
-router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => {
+router.put("/updateShop/:id", authMiddleWare,upload.single("shopPicture"), async (req, res) => {
   try {
     const { id } = req.params;
-
     let updates = req.body;
 
     if (updates.location) {
@@ -321,29 +320,30 @@ router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => 
     }
 
     const shop = await ShopDetails.findById(id);
-
     if (!shop) {
       return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-      // Handle picture update
     if (req.file) {
 
-      // Delete old image from cloudinary if exists
+
       if (shop.shopPicture) {
-        const oldPicture = JSON.parse(shop.shopPicture);   // ← Parse string to object
-        if (oldPicture.public_id) {
-          await cloudinary.uploader.destroy(oldPicture.public_id);
-        }
+
+        const urlParts = shop.shopPicture.split("/");
+        const fileName = urlParts[urlParts.length - 1]; 
+        const folder = urlParts[urlParts.length - 2];   
+
+        const publicId = folder + "/" + fileName.split(".")[0]; 
+     
+
+        await cloudinary.uploader.destroy(publicId);
       }
-      updates.shopPicture = JSON.stringify({
-        url: req.file.path,
-        public_id: req.file.filename
-      });
+
+      updates.shopPicture = req.file.path;
+
     } else {
       delete updates.shopPicture;
     }
-
 
     const updatedShop = await ShopDetails.findByIdAndUpdate(id, updates, {
       new: true,
@@ -360,4 +360,5 @@ router.put("/updateShop/:id", upload.single("shopPicture"), async (req, res) => 
     res.status(500).json({ success: false, message: e.message });
   }
 });
+
 module.exports = router;
