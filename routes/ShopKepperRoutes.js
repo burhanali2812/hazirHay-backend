@@ -220,13 +220,15 @@ router.get("/getShopKepperStatus/:id", authMiddleWare, async (req, res) => {
   }
 });
 router.get("/getShopKepperVarification", authMiddleWare, async (req, res) => {
-  const  id  = req.user;
-
   try {
+    const id = req.user.id; 
+
     const shopKepper = await ShopKepper.findById(id);
 
     if (!shopKepper) {
-      return res.status(404).json({ success: false, message: "Shopkeeper not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Shopkeeper not found" });
     }
 
     res.status(200).json({ success: true, status: shopKepper.isVerified });
@@ -235,6 +237,7 @@ router.get("/getShopKepperVarification", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 router.put("/updateBusy/:id", async (req, res) => {
   try {
     const { id } = req.params;
