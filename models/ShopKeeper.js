@@ -9,6 +9,7 @@ const shopKeeperSchema = new mongoose.Schema({
   cnic: { type: String, required: true },
   address: { type: String, required: true },
    profilePicture:{type:String},
+   paymentPicture:{type:String, required: true},
   isVerified: { type: Boolean, default : false },
   isShop: { type: Boolean, default : false },
   isLive: { type: Boolean, default : false },
