@@ -1,13 +1,12 @@
-
-const LocalShop = require("../models/LocalShop"); // Make sure you require your schema
-const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
+const bcrypt = require("bcryptjs");
+const LocalShop = require("../models/LocalShop"); // Your schema
 
+// Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -18,7 +17,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-
+// Save Local Shop
 router.post(
   "/saveLocalShop",
   upload.fields([
@@ -35,24 +34,24 @@ router.post(
         password,
         phone,
         services,
-        location, 
+        location,
       } = req.body;
 
-
+      // Validate required fields
       if (!shopName || !position || !shopAddress || !email || !password || !phone || !location) {
         return res.status(400).json({ message: "All required fields must be provided." });
       }
 
-
+      // Check if email exists
       const existingShop = await LocalShop.findOne({ email });
       if (existingShop) {
         return res.status(400).json({ message: "Email already registered." });
       }
 
-  
+      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-
+      // Parse services
       let parsedServices = [];
       if (services) {
         try {
@@ -62,7 +61,19 @@ router.post(
         }
       }
 
-    
+      // Parse location
+      let parsedLocation;
+      try {
+        parsedLocation = typeof location === "string" ? JSON.parse(location) : location;
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid location format." });
+      }
+
+      if (!parsedLocation.coordinates || !Array.isArray(parsedLocation.coordinates)) {
+        return res.status(400).json({ message: "Location coordinates are required." });
+      }
+
+      // Get uploaded files
       const shopPictureUrl = req.files?.shopPicture?.[0]?.path || "";
       const paymentPicUrl = req.files?.paymentPic?.[0]?.path || "";
 
@@ -70,7 +81,7 @@ router.post(
         return res.status(400).json({ message: "Payment screenshot is required." });
       }
 
- 
+      // Create LocalShop
       const newShop = new LocalShop({
         shopName,
         position,
@@ -81,14 +92,14 @@ router.post(
         password: hashedPassword,
         phone,
         services: parsedServices,
-        location, 
+        location: parsedLocation,
       });
 
       await newShop.save();
 
       return res.status(201).json({ message: "Local shop saved successfully!", shop: newShop });
     } catch (error) {
-      console.error(error);
+      console.error("Save LocalShop error:", error);
       return res.status(500).json({ message: "Server error" });
     }
   }
