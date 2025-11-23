@@ -11,6 +11,7 @@ const Cart = require("./routes/CartRoutes")
 const Notification = require("./routes/NotificationRoutes")
 const Worker = require("./routes/WorkerRoutes")
 const Transactions = require("./routes/TransactionRoutes")
+const LocalShop = require("./routes/LocalShopRoutes")
 const http = require("http");
 const path = require("path");
 const { initSocket } = require("./socket");
@@ -51,6 +52,7 @@ app.use("/cart", Cart);
 app.use("/notification", Notification)
 app.use("/worker", Worker)
 app.use("/transactions", Transactions)
+app.use("/localShop", LocalShop)
 connectDB().then(()=>{
     server.listen(PORT, ()=>{
         console.log(`Server Running on PORT ${PORT}`)
