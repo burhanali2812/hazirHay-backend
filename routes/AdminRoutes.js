@@ -14,6 +14,7 @@ const cloudinary = require("../cloudinaryConfig");
 const ShopDetails = require("../models/ShopDetails");
 const axios = require("axios");
 
+
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -32,7 +33,7 @@ const roleModelMap = {
 };
 router.post(
   "/saveUser",
-  upload.fields([{ name: "profilePicture" }, {name: "paymentPicture"}]),
+  upload.fields([{ name: "profilePicture" }]),
   async (req, res) => {
     try {
       const { name, email, password, phone, cnic, address, role } = req.body;
@@ -62,7 +63,7 @@ router.post(
         address,
         profilePicture: req.files?.profilePicture?.[0]?.path || "",
         ...(role === "shopKepper" && {
-          paymentPicture: req.files?.paymentPicture?.[0]?.path || "",
+         
           cnic
         }),
       });
@@ -84,7 +85,7 @@ router.post(
 router.post(
   "/shopInformation/:id",
 
-  upload.single("shopPicture"),
+    upload.fields([{ name: "shopPicture" }, {name: "paymentPicture"}]),
 
   async (req, res) => {
     const id = req.params.id;
@@ -110,6 +111,12 @@ router.post(
           .json({ success: false, message: "Invalid services format" });
       }
     }
+      const paymentPicPath = req.files?.paymentPicture?.[0]?.path || "";
+     await ShopKepper.findByIdAndUpdate(
+      id,
+      { paymentPicture: paymentPicPath },
+      { new: true }
+    );
 const shopExist = await ShopDetails.findOne({
   shopName: { $regex: `^${shopName}$`, $options: "i" }
 });
