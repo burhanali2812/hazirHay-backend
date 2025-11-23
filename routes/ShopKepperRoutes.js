@@ -23,7 +23,7 @@ router.delete("/deleteShopKepper/:id", async (req, res) => {
 });
 
 
-router.put("/verifyShopKepper/:id", async (req, res) => {
+router.put("/verifyShopKepper/:id", authMiddleWare, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -214,6 +214,22 @@ router.get("/getShopKepperStatus/:id", authMiddleWare, async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: shopKepper.isLive });
+  } catch (error) {
+    console.error("Error fetching shopkeeper status:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+router.get("/getShopKepperVarification", authMiddleWare, async (req, res) => {
+  const  id  = req.user;
+
+  try {
+    const shopKepper = await ShopKepper.findById(id);
+
+    if (!shopKepper) {
+      return res.status(404).json({ success: false, message: "Shopkeeper not found" });
+    }
+
+    res.status(200).json({ success: true, status: shopKepper.isVerified });
   } catch (error) {
     console.error("Error fetching shopkeeper status:", error);
     res.status(500).json({ success: false, message: "Server error" });

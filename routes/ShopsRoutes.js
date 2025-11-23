@@ -30,7 +30,7 @@ router.get("/getAllShops", authMiddleWare, async (req, res) => {
   }
 });
 
-router.get("/shopData/:id", async (req, res) => {
+router.get("/shopData/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
