@@ -12,6 +12,7 @@ const serviceSchema = new mongoose.Schema({
   subCategory: { 
     name : {type: String, required: true},
     price: {type: Number, required: true},
+    isVariablePricing : {type: Boolean},
     description: {type: String}
    },
 });
@@ -27,6 +28,7 @@ const shopDetailSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
   shopAddress: { type: String, required: true },
   shopPicture: { type: String, },
+     paymentPicture:{type:String, required: true},
 
   location: {
     type: {

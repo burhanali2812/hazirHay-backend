@@ -112,11 +112,7 @@ router.post(
       }
     }
       const paymentPicPath = req.files?.paymentPicture?.[0]?.path || "";
-     await ShopKepper.findByIdAndUpdate(
-      id,
-      { paymentPicture: paymentPicPath },
-      { new: true }
-    );
+
 const shopExist = await ShopDetails.findOne({
   shopName: { $regex: `^${shopName}$`, $options: "i" }
 });
@@ -144,6 +140,7 @@ if (shopwithkepperExist) {
         shopName,
         shopAddress,
         shopPicture: req.file?.path || "",
+         paymentPicture: paymentPicPath,
         location: {
           type: "Point",
           coordinates: coordinates,
@@ -161,7 +158,7 @@ if (shopwithkepperExist) {
 
       const shopKepper = await ShopKepper.findByIdAndUpdate(
         id,
-        { isShop: true },
+        { isShop: true,  },
         { new: true }
       );
 
