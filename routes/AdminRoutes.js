@@ -184,27 +184,33 @@ if (shopwithkepperExist) {
   }
 );
 
+
 router.post("/", async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    const roleData = roleModelMap[role];
+    let account = await Admin.findOne({ email });
+    let role = "admin";
 
-    if (!roleData) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid role provided" });
+    if (!account) {
+      account = await User.findOne({ email });
+      role = "user";
     }
 
-    const { model, label } = roleData;
-    const finalUser = role === "worker" ? "phone" : "email";
+    if (!account) {
+      account = await ShopKepper.findOne({ email });
+      role = "shopKepper";
+    }
 
-    const account = await model.findOne({ [finalUser]: email });
+    if (!account) {
+      account = await Worker.findOne({ phone: email }); 
+      role = "worker";
+    }
 
     if (!account) {
       return res
         .status(400)
-        .json({ success: false, message: `${label} not found on this ${finalUser}` });
+        .json({ success: false, message: "Account not found" });
     }
 
     const isMatch = await bcrypt.compare(password, account.password);
@@ -214,23 +220,29 @@ router.post("/", async (req, res) => {
         .json({ success: false, message: "Invalid password" });
     }
 
+  
     const token = jwt.sign(
       {
         id: account._id,
-        email: account.email,
-        role: account.role,
+        email: account.email || account.phone,
+        role: role,
       },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "30d" }
     );
-    await model.updateOne({ email: account.email }, { $inc: { activityCount: 1 } });
+
+  
+    await account.updateOne({ $inc: { activityCount: 1 } });
+
+ 
     account.password = undefined;
 
     return res.status(200).json({
       success: true,
-      message: `${label} logged in successfully!`,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} logged in successfully!`,
       token,
       user: account,
+      role,
     });
   } catch (error) {
     console.error(error);
@@ -239,6 +251,7 @@ router.post("/", async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 });
+
 
 router.get("/reverse-geocode", async (req, res) => {
   try {

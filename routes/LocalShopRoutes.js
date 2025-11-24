@@ -97,7 +97,7 @@ router.post(
 
       await newShop.save();
 
-      return res.status(201).json({ message: "Local shop saved successfully!", shop: newShop });
+      return res.status(201).json({ message: "Shop saved successfully!", shop: newShop });
     } catch (error) {
       console.error("Save LocalShop error:", error);
       return res.status(500).json({ message: "Server error" });

@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const localShopSchema = new mongoose.Schema({
   shopName: { type: String, required: true },
   position: { type: String, required: true },
+   role: { type: String, default: 'shop'},
   shopAddress: { type: String, required: true },
   shopPicture: { type: String },
   menuCard: { type: String },
