@@ -121,7 +121,7 @@ router.get("/getAllVerifiedLiveLocalShops", authMiddleWare, async (req, res) => 
     }
 
   
-    res.status(200).json({ success: true, shops: findLocalShops });
+    res.status(200).json({ success: true, shops: findLocalShops , message: "Local Shops Found Successfully!"});
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
