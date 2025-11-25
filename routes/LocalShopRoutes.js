@@ -5,6 +5,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const bcrypt = require("bcryptjs");
 const LocalShop = require("../models/LocalShop"); // Your schema
+const authMiddleWare = require("../authMiddleWare");
 
 // Cloudinary storage
 const storage = new CloudinaryStorage({
@@ -104,5 +105,28 @@ router.post(
     }
   }
 );
+
+router.get("/getAllVerifiedLiveLocalShops", authMiddleWare, async (req, res) => {
+  try {
+
+    if (req.user.role !== "user") {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+    // get the false data for just checking later on change
+    const findLocalShops = await LocalShop.find({ isLive: false, isVerified: false })
+      .select("-paymentPic -password");
+
+    if (findLocalShops.length === 0) {
+      return res.status(404).json({ success: false, message: "No shops found" });
+    }
+
+  
+    res.status(200).json({ success: true, shops: findLocalShops });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
 
 module.exports = router;
