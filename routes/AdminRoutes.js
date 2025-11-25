@@ -13,6 +13,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const ShopDetails = require("../models/ShopDetails");
 const axios = require("axios");
+const LocalShop = require("../models/LocalShop")
 
 
 const storage = new CloudinaryStorage({
@@ -30,6 +31,7 @@ const roleModelMap = {
   user: { model: User, label: "User" },
   shopKepper: { model: ShopKepper, label: "ShopKepper" },
   worker: { model: Worker, label: "Worker" },
+  shop: { model: LocalShop, label: "shop" },
 };
 router.post(
   "/saveUser",
@@ -187,34 +189,43 @@ if (shopwithkepperExist) {
 router.post("/", async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    const isAdminCheck = email.includes("^@@@@@^")
-    const upRole  = isAdminCheck ? "admin": role
+
+    const SECRET = "^@@@@@^";
+
+    const isAdminCheck = email.includes(SECRET);
+    const upRole = isAdminCheck ? "admin" : role;
+
+    
+    const cleanEmail = isAdminCheck ? email.replace(SECRET, "") : email;
 
     const roleData = roleModelMap[upRole];
-  
-
     if (!roleData) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid role provided" });
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
     }
 
     const { model, label } = roleData;
+
+  
     const finalUser = upRole === "worker" ? "phone" : "email";
 
-    const account = await model.findOne({ [finalUser]: email, role: upRole });
+
+    const query = {
+      [finalUser]: cleanEmail,
+      role: upRole
+    };
+
+    const account = await model.findOne(query);
 
     if (!account) {
-      return res
-        .status(400)
-        .json({ success: false, message: `${label} not found on this ${finalUser}` });
+      return res.status(400).json({
+        success: false,
+        message: `${label} not found on this ${finalUser}`,
+      });
     }
 
     const isMatch = await bcrypt.compare(password, account.password);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid password" });
+      return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
     const token = jwt.sign(
@@ -224,9 +235,14 @@ router.post("/", async (req, res) => {
         role: account.role,
       },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "30d" }
     );
-    await model.updateOne({ email: account.email }, { $inc: { activityCount: 1 } });
+
+    await model.updateOne(
+      { email: account.email },
+      { $inc: { activityCount: 1 } }
+    );
+
     account.password = undefined;
 
     return res.status(200).json({
@@ -236,13 +252,16 @@ router.post("/", async (req, res) => {
       user: account,
       role: account.role,
     });
+
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 });
+
 
 router.get("/reverse-geocode", async (req, res) => {
   try {
