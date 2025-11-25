@@ -8,7 +8,7 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, default: null },
   phone: { type: String, required: true },
    address: { type: String, required: true },
-   profilePicture:{type:String, required : true},
+   profilePicture:{type:String},
    createdAt: { type: Date, default: Date.now },
    activityCount: { type: Number, default: 0 }
 
