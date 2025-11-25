@@ -8,6 +8,9 @@ const ShopDetails = require("../models/ShopDetails");
 
 router.delete("/deleteShopKepper/:id", async (req, res) => {
   const { id } = req.params;
+    if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
 
   try {
     const deletedShop = await ShopKepper.findByIdAndDelete(id);
@@ -27,6 +30,9 @@ router.put("/verifyShopKepper/:id", authMiddleWare, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
+      if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
     let shopKepper;
     if (role === "accept") {
       shopKepper = await ShopKepper.findByIdAndUpdate(
