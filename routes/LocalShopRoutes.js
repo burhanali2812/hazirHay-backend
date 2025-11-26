@@ -36,6 +36,7 @@ router.post(
         phone,
         services,
         location,
+        description,
       } = req.body;
 
       // Validate required fields
@@ -87,6 +88,7 @@ router.post(
         shopName,
         position,
         shopAddress,
+        description,
         shopPicture: shopPictureUrl,
         paymentPic: paymentPicUrl,
         email,
