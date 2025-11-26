@@ -282,7 +282,7 @@ router.get("/reverse-geocode", async (req, res) => {
     "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
     "Accept-Language": "en",
     "accept": "application/json",
-    "referer": "https://hazirhay.com"
+    "referer": "https://hazir-hay.vercel.app"
   },
   timeout: 5000,
 });
