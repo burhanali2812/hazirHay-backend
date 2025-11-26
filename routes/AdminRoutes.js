@@ -269,43 +269,45 @@ router.get("/reverse-geocode", async (req, res) => {
     console.log("Incoming coordinates:", lat, lon);
 
     if (!lat || !lon) {
-      return res
-        .status(400)
-        .json({ error: "Latitude and longitude are required" });
+      return res.status(400).json({ error: "Latitude and longitude are required" });
     }
 
     const nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
 
-    const result = await axios.get(nominatimUrl, {
-  params: { lat, lon, format: "json" },
-  headers: {
-    "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
-    "Accept-Language": "en",
-    "accept": "application/json",
-    "referer": "https://hazir-hay.vercel.app"
-  },
-  timeout: 5000,
-});
+    const fetchNominatim = async (attempt = 1) => {
+      try {
+        const result = await axios.get(nominatimUrl, {
+          params: { lat, lon, format: "json" },
+          headers: {
+            "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
+            "Accept-Language": "en",
+          },
+          timeout: 12000, // 12 seconds
+        });
 
+        return result.data;
 
-    if (!result.data.address) {
-      return res
-        .status(404)
-        .json({ error: "No address found for given coordinates" });
+      } catch (err) {
+        console.log(`Attempt ${attempt} failed`);
+
+        if (attempt < 3) {
+          return await fetchNominatim(attempt + 1);
+        }
+
+        throw err;
+      }
+    };
+
+    const data = await fetchNominatim();
+
+    if (!data.address) {
+      return res.status(404).json({ error: "No address found" });
     }
 
-    res.json(result.data);
+    res.json(data);
+
   } catch (err) {
-    console.error(
-      "Error calling Nominatim:",
-      err.response?.data || err.message
-    );
-
-    if (err.response?.status === 429) {
-      return res
-        .status(429)
-        .json({ error: "Rate limit reached. Try again later." });
-    }
+    console.error("Final error:", err.message);
 
     res.status(500).json({
       error: "Failed to fetch location",
@@ -313,6 +315,7 @@ router.get("/reverse-geocode", async (req, res) => {
     });
   }
 });
+
 
 // router.get("/getUserById", authMiddleWare, async (req, res) => {
 //   try {
