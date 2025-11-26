@@ -277,13 +277,16 @@ router.get("/reverse-geocode", async (req, res) => {
     const nominatimUrl = "https://nominatim.openstreetmap.org/reverse";
 
     const result = await axios.get(nominatimUrl, {
-      params: { lat, lon, format: "json" },
-      headers: {
-        "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
-        "Accept-Language": "en",
-      },
-      timeout: 5000,
-    });
+  params: { lat, lon, format: "json" },
+  headers: {
+    "User-Agent": "HazirHayApp/1.0 (contact@hazirhay.com)",
+    "Accept-Language": "en",
+    "accept": "application/json",
+    "referer": "https://hazirhay.com"
+  },
+  timeout: 5000,
+});
+
 
     if (!result.data.address) {
       return res
