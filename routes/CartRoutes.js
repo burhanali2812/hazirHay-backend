@@ -35,19 +35,18 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const cartItems = await Cart.find({ userId }); 
-
-    if (!cartItems || cartItems.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Your cart is empty!",
-      });
-    }
+    const cart = await Cart.findOne({ userId }); // use findOne instead of find
+if (!cart) {
+  return res.status(404).json({
+    success: false,
+    message: "Your cart is empty!",
+  });
+}
 
     res.status(200).json({
       success: true,
       message: "Cart data found",
-      data: cartItems,
+      data: cart,
     });
   } catch (error) {
     console.error("Error fetching cart:", error.message);
