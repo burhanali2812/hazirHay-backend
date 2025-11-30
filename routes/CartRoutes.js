@@ -93,25 +93,30 @@ router.delete("/deleteUserCart", authMiddleWare, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const deletedCart = await Cart.findOneAndDelete({ userId });
+    // Find the user's cart
+    const cart = await Cart.findOne({ userId });
 
-    if (!deletedCart) {
+    if (!cart) {
       return res.status(404).json({
         success: false,
         message: "Cart not found",
       });
     }
 
+    // Clear the items array instead of deleting entire document
+    cart.items = [];
+    await cart.save();
+
     res.status(200).json({
       success: true,
-      message: "Cart deleted successfully",
-      data: deletedCart,
+      message: "Cart cleared successfully",
+      data: cart, // returns the cart object (items will be empty)
     });
   } catch (error) {
-    console.error("Error deleting cart:", error.message);
+    console.error("Error clearing cart:", error.message);
     res.status(500).json({
       success: false,
-      message: "Server error while deleting cart",
+      message: "Server error while clearing cart",
     });
   }
 });
