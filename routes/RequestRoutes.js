@@ -345,7 +345,9 @@ router.put("/markDelete/:id", authMiddleWare, async (req, res) => {
 
 
   try {
-    const order = await Requests.findByIdAndUpdate( id ,{status : "deleted"}, {new :  true});
+    const order = await Requests.findByIdAndUpdate( id ,{status : "deleted", "orderAssignment.workerId": null,
+    "orderAssignment.assignedAt": null,
+    "orderAssignment.status": ""}, {new :  true});
 
     if (!order) {
       return res.status(404).json({ success: false, message: "Order Not Found" });
