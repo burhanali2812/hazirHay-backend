@@ -290,7 +290,9 @@ router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res
     if (type === "delete") {
       await Requests.updateMany(
         { _id: { $in: requests.map((r) => r._id) }},
-        { $set: { status: "deleted" }}
+        { $set: { status: "deleted" , "orderAssignment.workerId": null,
+        "orderAssignment.assignedAt": null,
+        "orderAssignment.status": ""} }
       );
 
       return res.status(200).json({
