@@ -32,6 +32,7 @@ router.post(
         position,
         shopAddress,
         email,
+        category,
         password,
         phone,
         services,
@@ -40,7 +41,7 @@ router.post(
       } = req.body;
 
       // Validate required fields
-      if (!shopName || !position || !shopAddress || !email || !password || !phone || !location) {
+      if (!shopName || !position || !shopAddress || !email || !password || !phone || !location || !category || !description) {
         return res.status(400).json({ message: "All required fields must be provided." });
       }
 
@@ -91,6 +92,7 @@ router.post(
         description,
         shopPicture: shopPictureUrl,
         paymentPic: paymentPicUrl,
+        category,
         email,
         password: hashedPassword,
         phone,
