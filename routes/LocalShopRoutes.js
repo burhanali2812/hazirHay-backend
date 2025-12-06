@@ -110,14 +110,15 @@ router.post(
   }
 );
 
-router.get("/getAllVerifiedLiveLocalShops", authMiddleWare, async (req, res) => {
+router.get("/getAllVerifiedLiveLocalShops/:category", authMiddleWare, async (req, res) => {
+  const { category } = req.params;
   try {
 
     if (req.user.role !== "user") {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
     // get the false data for just checking later on change
-    const findLocalShops = await LocalShop.find({ isLive: false, isVerified: false })
+    const findLocalShops = await LocalShop.find({ isLive: false, isVerified: false , category })
       .select("-paymentPic -password");
 
     if (findLocalShops.length === 0) {
