@@ -111,31 +111,49 @@ router.post(
 );
 
 router.get("/getAllVerifiedLiveLocalShops/:category", authMiddleWare, async (req, res) => {
-  const { category } = req.params;
   try {
+    const { category } = req.params;
+    const { type, name } = req.query;
 
     if (req.user.role !== "user") {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
-    // get the false data for just checking later on change
-    const findLocalShops = await LocalShop.find({ isLive: false, isVerified: false , category })
+    let query = {
+      isVerified: false,
+      category
+    };
+
+    if (type === "shopName" && name) {
+      query.shopName = name;
+    } 
+    else if (type === "services" && name) {
+      query["services.name"] = name;
+    }
+
+    const shops = await LocalShop.find(query)
       .select("-paymentPic -password");
 
-    if (findLocalShops.length === 0) {
+    if (shops.length === 0) {
       return res.status(404).json({ success: false, message: "No shops found" });
     }
 
-  
-    res.status(200).json({ success: true, shops: findLocalShops , message: "Local Shops Found Successfully!"});
+    res.status(200).json({
+      success: true,
+      shops,
+      message: "Local Shops Found Successfully!"
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 });
 
+
 router.get("/unique-shopnames/:category", async (req, res) => {
   try {
     const { category } = req.params;
+
 
     const shopNames = await LocalShop.distinct("shopName", { category });
 
