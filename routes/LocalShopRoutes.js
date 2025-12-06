@@ -133,5 +133,36 @@ router.get("/getAllVerifiedLiveLocalShops/:category", authMiddleWare, async (req
   }
 });
 
+router.get("/unique-shopnames/:category", async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const shopNames = await LocalShop.distinct("shopName", { category });
+
+    res.status(200).json({
+      success: true,
+      shopNames,
+    });
+  } catch (error) {
+    console.log("Error getting unique shop names:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+router.get("/unique-services/:category", async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const services = await LocalShop.distinct("services.name", { category });
+
+    res.status(200).json({
+      success: true,
+      services,
+    });
+  } catch (error) {
+    console.log("Error getting unique services:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 module.exports = router;
