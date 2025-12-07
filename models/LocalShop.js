@@ -7,7 +7,7 @@ const localShopSchema = new mongoose.Schema({
    role: { type: String, default: 'shop'},
   shopAddress: { type: String, required: true },
   shopPicture: { type: String },
-  menuCard: { type: String },
+  menuCard: [{ type: String }],
   paymentPic: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
