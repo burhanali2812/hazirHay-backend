@@ -567,28 +567,28 @@ router.put("/toggleLiveStatus", authMiddleWare, async (req, res) => {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
-    // Find shop by ID instead of email
     const shop = await LocalShop.findById(req.user.id);
-
     if (!shop) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shop not found" });
+      return res.status(404).json({ success: false, message: "Shop not found" });
     }
 
-    shop.isLive = !shop.isLive;
-    await shop.save();
+    const updatedShop = await LocalShop.findByIdAndUpdate(
+      req.user.id,
+      { isLive: !shop.isLive },
+      { new: true, runValidators: false }  // ⬅ disable full validation
+    );
 
     res.status(200).json({
       success: true,
-      message: `Shop is now ${shop.isLive ? "Live" : "Offline"}`,
-      isLive: shop.isLive,
+      message: `Shop is now ${updatedShop.isLive ? "Live" : "Offline"}`,
+      isLive: updatedShop.isLive,
     });
   } catch (error) {
     console.error("Error toggling live status:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 
 module.exports = router;
