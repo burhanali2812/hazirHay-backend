@@ -445,7 +445,8 @@ router.post(
           .json({ success: false, message: "No images uploaded" });
       }
 
-      const shop = await LocalShop.findOne({ email: req.user.email });
+      // Get shop by ID (correct for new login tokens)
+      const shop = await LocalShop.findById(req.user.id);
 
       if (!shop) {
         return res
@@ -453,24 +454,24 @@ router.post(
           .json({ success: false, message: "Shop not found" });
       }
 
-      // Initialize menuCard array if it doesn't exist
-      if (!shop.menuCard) {
-        shop.menuCard = [];
-      } else if (typeof shop.menuCard === "string") {
-        // Convert old string format to array
-        shop.menuCard = shop.menuCard ? [shop.menuCard] : [];
-      }
-
-      // Add new menu card URLs
       const newMenuCards = req.files.map((file) => file.path);
-      shop.menuCard = [...shop.menuCard, ...newMenuCards];
 
-      await shop.save();
+      // Update without triggering full validation
+      const updatedShop = await LocalShop.findByIdAndUpdate(
+        req.user.id,
+        {
+          $push: { menuCard: { $each: newMenuCards } }
+        },
+        {
+          new: true,
+          runValidators: false // ⬅ disables schema validation
+        }
+      ).select("-password");
 
       res.status(200).json({
         success: true,
         message: "Menu cards added successfully",
-        shop: await LocalShop.findById(shop._id).select("-password"),
+        shop: updatedShop,
       });
     } catch (error) {
       console.error("Error adding menu cards:", error);
@@ -478,6 +479,7 @@ router.post(
     }
   }
 );
+
 
 // Delete Specific Menu Card
 router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
