@@ -567,7 +567,8 @@ router.put("/toggleLiveStatus", authMiddleWare, async (req, res) => {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
-    const shop = await LocalShop.findOne({ email: req.user.email });
+    // Find shop by ID instead of email
+    const shop = await LocalShop.findById(req.user.id);
 
     if (!shop) {
       return res
@@ -588,5 +589,6 @@ router.put("/toggleLiveStatus", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 module.exports = router;
