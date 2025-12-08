@@ -216,14 +216,14 @@ router.get("/getShopData", authMiddleWare, async (req, res) => {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
-    const shop = await LocalShop.findOne({ email: req.user.email }).select(
-      "-password"
-    );
+    // Fetch by ID instead of email
+    const shop = await LocalShop.findById(req.user.id).select("-password -paymentPic");
 
     if (!shop) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Shop not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Shop not found",
+      });
     }
 
     res.status(200).json({
@@ -237,6 +237,7 @@ router.get("/getShopData", authMiddleWare, async (req, res) => {
   }
 });
 
+
 // Update Shop Information
 router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
   try {
@@ -247,7 +248,8 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
     const { shopName, position, description, shopAddress, phone, email } =
       req.body;
 
-    const shop = await LocalShop.findOne({ email: req.user.email });
+    // Fetch by ID (correct)
+    const shop = await LocalShop.findById(req.user.id);
 
     if (!shop) {
       return res
@@ -255,33 +257,46 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Shop not found" });
     }
 
-    if (shopName) shop.shopName = shopName;
-    if (position) shop.position = position;
-    if (description) shop.description = description;
-    if (shopAddress) shop.shopAddress = shopAddress;
-    if (phone) shop.phone = phone;
-    if (email && email !== req.user.email) {
+    // Email change → must check uniqueness
+    if (email && email !== shop.email) {
       const existingShop = await LocalShop.findOne({ email });
       if (existingShop) {
         return res
           .status(400)
           .json({ success: false, message: "Email already in use" });
       }
-      shop.email = email;
     }
 
-    await shop.save();
+    // Build update object
+    const updateData = {};
+    if (shopName) updateData.shopName = shopName;
+    if (position) updateData.position = position;
+    if (description) updateData.description = description;
+    if (shopAddress) updateData.shopAddress = shopAddress;
+    if (phone) updateData.phone = phone;
+    if (email && email !== shop.email) updateData.email = email;
+
+    // Update WITHOUT validation
+    const updatedShop = await LocalShop.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      {
+        new: true,
+        runValidators: false, // ⬅ prevents required-field validation
+      }
+    ).select("-password");
 
     res.status(200).json({
       success: true,
       message: "Shop information updated successfully",
-      shop: await LocalShop.findById(shop._id).select("-password"),
+      shop: updatedShop,
     });
   } catch (error) {
     console.error("Error updating shop info:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // Update Services
 router.put("/updateServices", authMiddleWare, async (req, res) => {
@@ -298,7 +313,8 @@ router.put("/updateServices", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Services must be an array" });
     }
 
-    const shop = await LocalShop.findOne({ email: req.user.email });
+    // Fetch by ID
+    const shop = await LocalShop.findById(req.user.id);
 
     if (!shop) {
       return res
@@ -306,19 +322,27 @@ router.put("/updateServices", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Shop not found" });
     }
 
-    shop.services = services;
-    await shop.save();
+    // Update without validation
+    const updatedShop = await LocalShop.findByIdAndUpdate(
+      req.user.id,
+      { services },
+      {
+        new: true,
+        runValidators: false,
+      }
+    ).select("-password");
 
     res.status(200).json({
       success: true,
       message: "Services updated successfully",
-      shop: await LocalShop.findById(shop._id).select("-password"),
+      shop: updatedShop,
     });
   } catch (error) {
     console.error("Error updating services:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // Update Location
 router.put("/updateLocation", authMiddleWare, async (req, res) => {
@@ -339,7 +363,8 @@ router.put("/updateLocation", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Invalid location format" });
     }
 
-    const shop = await LocalShop.findOne({ email: req.user.email });
+    // Fetch by ID
+    const shop = await LocalShop.findById(req.user.id);
 
     if (!shop) {
       return res
@@ -347,18 +372,28 @@ router.put("/updateLocation", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Shop not found" });
     }
 
-    shop.location = {
-      type: "Point",
-      coordinates: location.coordinates,
-      area: location.area || shop.location.area,
+    const updateData = {
+      location: {
+        type: "Point",
+        coordinates: location.coordinates,
+        area: location.area || shop.location?.area || "",
+      },
     };
 
-    await shop.save();
+    // Update without validation
+    const updatedShop = await LocalShop.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      {
+        new: true,
+        runValidators: false,
+      }
+    ).select("-password");
 
     res.status(200).json({
       success: true,
       message: "Location updated successfully",
-      shop: await LocalShop.findById(shop._id).select("-password"),
+      shop: updatedShop,
     });
   } catch (error) {
     console.error("Error updating location:", error);
@@ -374,9 +409,7 @@ router.put(
   async (req, res) => {
     try {
       if (req.user.role !== "shop") {
-        return res
-          .status(403)
-          .json({ success: false, message: "Access Denied" });
+        return res.status(403).json({ success: false, message: "Access Denied" });
       }
 
       const { imageType } = req.body;
@@ -387,13 +420,15 @@ router.put(
           .json({ success: false, message: "No image uploaded" });
       }
 
-      if (!["shopPicture", "paymentPic"].includes(imageType)) {
+      // Only shopPicture allowed now
+      if (imageType !== "shopPicture") {
         return res
           .status(400)
           .json({ success: false, message: "Invalid image type" });
       }
 
-      const shop = await LocalShop.findOne({ email: req.user.email });
+      // Fetch shop by ID
+      const shop = await LocalShop.findById(req.user.id);
 
       if (!shop) {
         return res
@@ -401,23 +436,27 @@ router.put(
           .json({ success: false, message: "Shop not found" });
       }
 
-      // Delete old image from cloudinary if exists
-      if (shop[imageType]) {
+      // Delete old shop picture (if exists)
+      if (shop.shopPicture) {
         try {
-          const publicId = shop[imageType].split("/").pop().split(".")[0];
+          const publicId = shop.shopPicture.split("/").pop().split(".")[0];
           await cloudinary.uploader.destroy(`profile_pictures/${publicId}`);
         } catch (err) {
           console.log("Error deleting old image:", err);
         }
       }
 
-      shop[imageType] = req.file.path;
-      await shop.save();
+      // Update shop picture
+      const updatedShop = await LocalShop.findByIdAndUpdate(
+        req.user.id,
+        { shopPicture: req.file.path },
+        { new: true, runValidators: false }
+      ).select("-password");
 
       res.status(200).json({
         success: true,
-        message: `${imageType} updated successfully`,
-        shop: await LocalShop.findById(shop._id).select("-password"),
+        message: `Shop picture updated successfully`,
+        shop: updatedShop,
       });
     } catch (error) {
       console.error("Error updating image:", error);
@@ -425,6 +464,7 @@ router.put(
     }
   }
 );
+
 
 // Add Menu Card Images (Multiple)
 router.post(
@@ -466,7 +506,7 @@ router.post(
           new: true,
           runValidators: false // ⬅ disables schema validation
         }
-      ).select("-password");
+      ).select("-password -paymentPic");
 
       res.status(200).json({
         success: true,
@@ -496,7 +536,8 @@ router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Menu card URL required" });
     }
 
-    const shop = await LocalShop.findOne({ email: req.user.email });
+    // Fetch shop by ID
+    const shop = await LocalShop.findById(req.user.id);
 
     if (!shop) {
       return res
@@ -504,12 +545,16 @@ router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Shop not found" });
     }
 
-    // Remove menu card from array
-    if (Array.isArray(shop.menuCard)) {
-      shop.menuCard = shop.menuCard.filter((url) => url !== menuCardUrl);
+    if (!Array.isArray(shop.menuCard) || shop.menuCard.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No menu cards to delete" });
     }
 
-    // Delete from cloudinary
+    // Remove the menu card from array
+    const updatedMenuCards = shop.menuCard.filter((url) => url !== menuCardUrl);
+
+    // Delete image from Cloudinary
     try {
       const publicId = menuCardUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(`profile_pictures/${publicId}`);
@@ -517,18 +562,24 @@ router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
       console.log("Error deleting image from cloudinary:", err);
     }
 
-    await shop.save();
+    // Update shop without validation
+    const updatedShop = await LocalShop.findByIdAndUpdate(
+      req.user.id,
+      { menuCard: updatedMenuCards },
+      { new: true, runValidators: false }
+    ).select("-password -paymentPic");
 
     res.status(200).json({
       success: true,
       message: "Menu card deleted successfully",
-      shop: await LocalShop.findById(shop._id).select("-password"),
+      shop: updatedShop,
     });
   } catch (error) {
     console.error("Error deleting menu card:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // Increment Activity Count
 router.put("/incrementActivity/:shopId", authMiddleWare, async (req, res) => {
