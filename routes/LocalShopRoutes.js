@@ -200,6 +200,84 @@ router.get("/getAllLocalShops", authMiddleWare, async (req, res) => {
   }
 });
 
+router.get("/getPendingLocalShops", authMiddleWare, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const pendingShops = await LocalShop.find({ isVerified: false })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Pending local shops fetched successfully",
+      data: pendingShops,
+    });
+  } catch (error) {
+    console.error("Error fetching pending local shops:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching pending local shops",
+      error: error.message,
+    });
+  }
+});
+
+router.put("/verifyLocalShop/:id", authMiddleWare, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const { id } = req.params;
+    const { action } = req.body;
+
+    if (action === "accept") {
+      const shop = await LocalShop.findByIdAndUpdate(
+        id,
+        { isVerified: true },
+        { new: true }
+      );
+
+      if (!shop) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Shop not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Local shop verified successfully",
+        data: shop,
+      });
+    } else if (action === "decline") {
+      const shop = await LocalShop.findByIdAndDelete(id);
+
+      if (!shop) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Shop not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Local shop request declined and removed",
+      });
+    } else {
+      res.status(400).json({ success: false, message: "Invalid action" });
+    }
+  } catch (error) {
+    console.error("Error verifying local shop:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error processing request",
+      error: error.message,
+    });
+  }
+});
+
 router.get("/unique-shopnames/:category", async (req, res) => {
   try {
     const { category } = req.params;
