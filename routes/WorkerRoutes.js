@@ -6,9 +6,9 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const path = require("path");
 const Worker = require("../models/Worker");
-const ShopDetails = require("../models/ShopDetails")
+const ShopDetails = require("../models/ShopDetails");
 const authMiddleWare = require("../authMiddleWare");
-const axios = require("axios")
+const axios = require("axios");
 
 // multer Setup for profile picture upload ---
 const storage = new CloudinaryStorage({
@@ -21,7 +21,6 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-
 router.post(
   "/saveWorker",
   authMiddleWare,
@@ -32,15 +31,16 @@ router.post(
       const { name, phone } = req.body;
       const cleanPhone = phone.trim();
 
- 
-      const alreadyExist = await Worker.findOne({ phone: cleanPhone, shopOwnerId });
+      const alreadyExist = await Worker.findOne({
+        phone: cleanPhone,
+        shopOwnerId,
+      });
       if (alreadyExist) {
         return res.status(400).json({
           success: false,
           message: "Phone already registered for this shop.",
         });
       }
-
 
       const shop = await ShopDetails.findOne({ owner: shopOwnerId });
       if (!shop) {
@@ -50,11 +50,9 @@ router.post(
         });
       }
 
-
       const genSalt = await bcrypt.genSalt(10);
       const hashPassword = await bcrypt.hash(cleanPhone, genSalt);
 
-    
       const worker = new Worker({
         name,
         phone: cleanPhone,
@@ -89,8 +87,9 @@ router.get("/getWorkersByShop", authMiddleWare, async (req, res) => {
   try {
     const shopOwnerId = req.user.id;
 
-    
-    const workers = await Worker.find({ shopOwnerId }).select("-password").sort({ createdAt: -1 });
+    const workers = await Worker.find({ shopOwnerId })
+      .select("-password")
+      .sort({ createdAt: -1 });
 
     if (workers.length === 0) {
       return res.status(404).json({
@@ -112,52 +111,82 @@ router.get("/getWorkersByShop", authMiddleWare, async (req, res) => {
     });
   }
 });
-router.put("/updateLiveLocation/:workerId", authMiddleWare,async (req, res) => {
+
+router.get("/getAllWorkers", authMiddleWare, async (req, res) => {
   try {
-    const { lat, lng } = req.body;
-    if (lat == null || lng == null) {
-      return res.status(400).json({ message: "lat and lng are required" });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
     }
 
-    const worker = await Worker.findByIdAndUpdate(
-      req.params.workerId,
-      {
-        $set: {
-          "location.coordinates": [lat, lng], 
-        },
-      },
-      { new: true }
-    );
+    const workers = await Worker.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
 
-    if (!worker) {
-      return res.status(404).json({ message: "worker not found" });
-    }
-res.json({
-  success: true,
-  message: "Coordinates updated successfully",
-  coordinates: worker.location.coordinates,
-});
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({success : false, message: "Server error" });
+    res.status(200).json({
+      success: true,
+      message: "All workers fetched successfully",
+      data: workers,
+    });
+  } catch (error) {
+    console.error("Error fetching all workers:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching all workers",
+      error: error.message,
+    });
   }
 });
-router.get("/getLiveLocation/:workerId",authMiddleWare, async (req, res) => {
+router.put(
+  "/updateLiveLocation/:workerId",
+  authMiddleWare,
+  async (req, res) => {
+    try {
+      const { lat, lng } = req.body;
+      if (lat == null || lng == null) {
+        return res.status(400).json({ message: "lat and lng are required" });
+      }
+
+      const worker = await Worker.findByIdAndUpdate(
+        req.params.workerId,
+        {
+          $set: {
+            "location.coordinates": [lat, lng],
+          },
+        },
+        { new: true }
+      );
+
+      if (!worker) {
+        return res.status(404).json({ message: "worker not found" });
+      }
+      res.json({
+        success: true,
+        message: "Coordinates updated successfully",
+        coordinates: worker.location.coordinates,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+router.get("/getLiveLocation/:workerId", authMiddleWare, async (req, res) => {
   try {
-    const worker = await Worker.findById(req.params.workerId).select("location.coordinates");
+    const worker = await Worker.findById(req.params.workerId).select(
+      "location.coordinates"
+    );
     if (!worker) {
       return res.status(404).json({ message: "Worker not found" });
     }
 
     res.json({
-      success : true,
-      message: "live coordinates found", 
-      coordinates: worker.location.coordinates, 
+      success: true,
+      message: "live coordinates found",
+      coordinates: worker.location.coordinates,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success : false,message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -187,7 +216,6 @@ router.delete("/deleteWorker/:id", authMiddleWare, async (req, res) => {
   }
 });
 
-
 router.post("/askAiWorker", async (req, res) => {
   const prompt = req.body.prompt;
 
@@ -210,7 +238,7 @@ router.post("/askAiWorker", async (req, res) => {
 
     // 3. Extract the generated text cleanly
     const generatedText = response.data.candidates?.[0].content.parts?.[0].text;
-    
+
     // Check if text was successfully extracted
     if (generatedText) {
       res.json({ answer: generatedText });
@@ -221,10 +249,12 @@ router.post("/askAiWorker", async (req, res) => {
     }
   } catch (error) {
     // 4. Improved Error Logging
-    console.error("Gemini request failed:", error.response?.data || error.message);
+    console.error(
+      "Gemini request failed:",
+      error.response?.data || error.message
+    );
     res.status(500).json({ error: "Gemini request failed" });
   }
 });
-
 
 module.exports = router;

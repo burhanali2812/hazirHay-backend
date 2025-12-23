@@ -177,6 +177,29 @@ router.get(
   }
 );
 
+router.get("/getAllLocalShops", authMiddleWare, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const localShops = await LocalShop.find().select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "All local shops fetched successfully",
+      data: localShops,
+    });
+  } catch (error) {
+    console.error("Error fetching all local shops:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching all local shops",
+      error: error.message,
+    });
+  }
+});
+
 router.get("/unique-shopnames/:category", async (req, res) => {
   try {
     const { category } = req.params;
@@ -217,7 +240,9 @@ router.get("/getShopData", authMiddleWare, async (req, res) => {
     }
 
     // Fetch by ID instead of email
-    const shop = await LocalShop.findById(req.user.id).select("-password -paymentPic");
+    const shop = await LocalShop.findById(req.user.id).select(
+      "-password -paymentPic"
+    );
 
     if (!shop) {
       return res.status(404).json({
@@ -236,7 +261,6 @@ router.get("/getShopData", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 // Update Shop Information
 router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
@@ -297,7 +321,6 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
   }
 });
 
-
 // Update Services
 router.put("/updateServices", authMiddleWare, async (req, res) => {
   try {
@@ -342,7 +365,6 @@ router.put("/updateServices", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 // Update Location
 router.put("/updateLocation", authMiddleWare, async (req, res) => {
@@ -409,7 +431,9 @@ router.put(
   async (req, res) => {
     try {
       if (req.user.role !== "shop") {
-        return res.status(403).json({ success: false, message: "Access Denied" });
+        return res
+          .status(403)
+          .json({ success: false, message: "Access Denied" });
       }
 
       const { imageType } = req.body;
@@ -465,7 +489,6 @@ router.put(
   }
 );
 
-
 // Add Menu Card Images (Multiple)
 router.post(
   "/addMenuCards",
@@ -500,11 +523,11 @@ router.post(
       const updatedShop = await LocalShop.findByIdAndUpdate(
         req.user.id,
         {
-          $push: { menuCard: { $each: newMenuCards } }
+          $push: { menuCard: { $each: newMenuCards } },
         },
         {
           new: true,
-          runValidators: false // ⬅ disables schema validation
+          runValidators: false, // ⬅ disables schema validation
         }
       ).select("-password -paymentPic");
 
@@ -519,7 +542,6 @@ router.post(
     }
   }
 );
-
 
 // Delete Specific Menu Card
 router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
@@ -580,7 +602,6 @@ router.delete("/deleteMenuCard", authMiddleWare, async (req, res) => {
   }
 });
 
-
 // Increment Activity Count
 router.put("/incrementActivity/:shopId", authMiddleWare, async (req, res) => {
   try {
@@ -622,13 +643,15 @@ router.put("/toggleLiveStatus", authMiddleWare, async (req, res) => {
 
     const shop = await LocalShop.findById(req.user.id);
     if (!shop) {
-      return res.status(404).json({ success: false, message: "Shop not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found" });
     }
 
     const updatedShop = await LocalShop.findByIdAndUpdate(
       req.user.id,
       { isLive: !shop.isLive },
-      { new: true, runValidators: false }  // ⬅ disable full validation
+      { new: true, runValidators: false } // ⬅ disable full validation
     );
 
     res.status(200).json({
@@ -641,7 +664,5 @@ router.put("/toggleLiveStatus", authMiddleWare, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
-
 
 module.exports = router;
