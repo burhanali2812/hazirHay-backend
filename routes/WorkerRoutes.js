@@ -7,8 +7,10 @@ const cloudinary = require("../cloudinaryConfig");
 const path = require("path");
 const Worker = require("../models/Worker");
 const ShopDetails = require("../models/ShopDetails");
+const ShopKepper = require("../models/ShopKeeper");
 const authMiddleWare = require("../authMiddleWare");
 const axios = require("axios");
+const { createNotification, NotificationMessages } = require("../helpers/notificationHelper");
 
 // multer Setup for profile picture upload ---
 const storage = new CloudinaryStorage({
@@ -64,6 +66,25 @@ router.post(
       });
 
       await worker.save();
+
+      // Notify worker about creation
+      await createNotification(
+        "signup",
+        NotificationMessages.WORKER_SIGNUP(name, shop.shopName),
+        worker._id,
+        worker._id
+      );
+
+      // Notify shopkeeper about new worker
+      const shopKeeper = await ShopKepper.findById(shopOwnerId);
+      if (shopKeeper) {
+        await createNotification(
+          "worker_added",
+          NotificationMessages.SHOPKEEPER_WORKER_ADDED(name),
+          shopOwnerId,
+          worker._id
+        );
+      }
 
       res.status(200).json({
         success: true,

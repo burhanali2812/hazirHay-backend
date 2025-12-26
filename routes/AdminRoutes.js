@@ -4,7 +4,7 @@ const User = require("../models/User");
 const Admin = require("../models/Admin");
 const jwt = require("jsonwebtoken");
 const ShopKepper = require("../models/ShopKeeper");
-const Worker = require("../models/Worker")
+const Worker = require("../models/Worker");
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const authMiddleWare = require("../authMiddleWare");
@@ -13,7 +13,8 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const ShopDetails = require("../models/ShopDetails");
 const axios = require("axios");
-const LocalShop = require("../models/LocalShop")
+const LocalShop = require("../models/LocalShop");
+const { createNotification, createBulkNotifications, NotificationMessages } = require("../helpers/notificationHelper");
 
 
 const storage = new CloudinaryStorage({
@@ -71,6 +72,33 @@ router.post(
       });
 
       await account.save();
+
+      // Send notification to the created account
+      if (role === "user") {
+        await createNotification(
+          "signup",
+          NotificationMessages.USER_SIGNUP(name),
+          account._id,
+          account._id
+        );
+      } else if (role === "shopKepper") {
+        await createNotification(
+          "signup",
+          NotificationMessages.SHOPKEEPER_SIGNUP(name),
+          account._id,
+          account._id
+        );
+
+        // Notify all admins about new shopkeeper
+        const admins = await Admin.find();
+        const adminNotifications = admins.map(admin => ({
+          type: "new_request",
+          message: NotificationMessages.ADMIN_NEW_SHOPKEEPER_REQUEST(name),
+          userId: admin._id,
+          checkoutId: account._id
+        }));
+        await createBulkNotifications(adminNotifications);
+      }
 
       res.status(200).json({
         success: true,
@@ -382,6 +410,16 @@ router.put("/updateShop/:id", authMiddleWare,upload.single("shopPicture"), async
     const updatedShop = await ShopDetails.findByIdAndUpdate(id, updates, {
       new: true,
     });
+    
+    // Notify shopkeeper about shop updates
+    if (updatedShop.shopKeeper) {
+      await createNotification(
+        "update",
+        `Your shop details have been updated by admin.`,
+        updatedShop.shopKeeper,
+        updatedShop._id
+      );
+    }
 
     res.json({
       success: true,

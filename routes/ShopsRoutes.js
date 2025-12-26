@@ -3,6 +3,11 @@ const axios = require("axios");
 const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
+const {
+  createNotification,
+  NotificationMessages,
+} = require("../helpers/notificationHelper");
+const ShopKepper = require("../models/ShopKeeper");
 
 router.get("/getAllShops", authMiddleWare, async (req, res) => {
   try {
@@ -67,21 +72,19 @@ router.get("/shopsDataByCategory", authMiddleWare, async (req, res) => {
           "subCategory.name": subCategory,
         },
       },
-    })
-      .populate({
-        path: "owner",
-        match: { isVerified: true }, 
-        select: "isVerified",        
-      });
+    }).populate({
+      path: "owner",
+      match: { isVerified: true },
+      select: "isVerified",
+    });
 
-  
-    const verifiedProviders = providers.filter(shop => shop.owner);
+    const verifiedProviders = providers.filter((shop) => shop.owner);
 
     if (!verifiedProviders.length) {
       return res.status(404).json({
         success: false,
         message: "No verified providers found",
-        notFound : true,
+        notFound: true,
       });
     }
 
@@ -111,6 +114,18 @@ router.post("/addReview", async (req, res) => {
     const newReview = { name, msg, rate };
     shop.reviews.push(newReview);
     await shop.save();
+
+    // Notify shopkeeper about new review
+    if (shop.shopKeeper) {
+      const rating = rate === 5 ? "5 stars" : `${rate} stars`;
+      await createNotification(
+        "review",
+        NotificationMessages.shopkeeper.reviewReceived(name, rating),
+        shop.shopKeeper,
+        shopId
+      );
+    }
+
     res.status(200).json({
       success: true,
       message: "Review added successfully",
@@ -132,8 +147,8 @@ router.post("/getPriceEstimate", async (req, res) => {
     let prices = [];
     const findShop = await ShopDetails.find();
 
-    findShop.forEach(shop => {
-      shop.servicesOffered.forEach(service => {
+    findShop.forEach((shop) => {
+      shop.servicesOffered.forEach((service) => {
         if (
           service.category === category &&
           service.subCategory.name === subCategory
@@ -142,7 +157,7 @@ router.post("/getPriceEstimate", async (req, res) => {
         }
       });
     });
-        if (prices.length === 0) {
+    if (prices.length === 0) {
       return res.status(404).json({
         success: false,
       });
@@ -159,7 +174,14 @@ router.post("/getPriceEstimate", async (req, res) => {
     const max10 = avgPrice + percentage10;
     const random = avgPrice + percentage10 * (Math.random() * 2 - 1);
 
-    const finalPrices = [min10.toFixed(0), min5.toFixed(0), avgPrice.toFixed(0), max5.toFixed(0), max10.toFixed(0), random.toFixed(0)];
+    const finalPrices = [
+      min10.toFixed(0),
+      min5.toFixed(0),
+      avgPrice.toFixed(0),
+      max5.toFixed(0),
+      max10.toFixed(0),
+      random.toFixed(0),
+    ];
 
     res.status(200).json({
       success: true,
@@ -176,22 +198,25 @@ router.post("/getPriceEstimate", async (req, res) => {
   }
 });
 
-
-
-
-
 router.get("/checkShopStatus", authMiddleWare, async (req, res) => {
   try {
     const { id } = req.user;
-    const shop = await ShopDetails.findOne({owner: id});
-    if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
+    const shop = await ShopDetails.findOne({ owner: id });
+    if (!shop)
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found" });
 
     if (shop.isBlocked && shop.blockedRequestDate) {
       const now = new Date();
-      const blockEnd = new Date(shop.blockedRequestDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const blockEnd = new Date(
+        shop.blockedRequestDate.getTime() + 7 * 24 * 60 * 60 * 1000
+      );
 
       if (now < blockEnd) {
-        const remainingDays = Math.ceil((blockEnd - now) / (1000 * 60 * 60 * 24));
+        const remainingDays = Math.ceil(
+          (blockEnd - now) / (1000 * 60 * 60 * 24)
+        );
         return res.status(200).json({
           success: true,
           status: shop.isBlocked,
@@ -219,39 +244,43 @@ router.get("/checkShopStatus", authMiddleWare, async (req, res) => {
   }
 });
 
-router.put("/resetCancelCount/:id",  async (req, res) => {
+router.put("/resetCancelCount/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const shop = await ShopDetails.findById(id);
     if (!shop) {
-      return res.status(404).json({ success: false, message: "Shop not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found" });
     }
     shop.cancelRequest = 0;
     shop.isBlocked = false;
     shop.blockedRequestDate = null;
     await shop.save();
-    res.status(200).json({ success: true, message: "Cancel count reset and shop unblocked if it was blocked." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Cancel count reset and shop unblocked if it was blocked.",
+      });
   } catch (error) {
     console.error("Error resetting cancel count:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
-}
-
-);
+});
 
 router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
   try {
     const { shopId } = req.params;
     const { mode, serviceId, category, subCategory } = req.body;
 
-
     if (mode === "add") {
       const updatedShop = await ShopDetails.findByIdAndUpdate(
         shopId,
         {
           $push: {
-            servicesOffered: { category, subCategory }
-          }
+            servicesOffered: { category, subCategory },
+          },
         },
         { new: true }
       );
@@ -259,7 +288,7 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "New service added successfully",
-        shop: updatedShop
+        shop: updatedShop,
       });
     }
 
@@ -267,7 +296,7 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
       if (!serviceId) {
         return res.status(400).json({
           success: false,
-          message: "Service ID is required for editing"
+          message: "Service ID is required for editing",
         });
       }
 
@@ -276,8 +305,8 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
         {
           $set: {
             "servicesOffered.$.category": category,
-            "servicesOffered.$.subCategory": subCategory
-          }
+            "servicesOffered.$.subCategory": subCategory,
+          },
         },
         { new: true }
       );
@@ -285,7 +314,7 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Service updated successfully",
-        shop: updatedShop
+        shop: updatedShop,
       });
     }
 
@@ -293,7 +322,7 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
       if (!serviceId) {
         return res.status(400).json({
           success: false,
-          message: "Service ID is required for deleting"
+          message: "Service ID is required for deleting",
         });
       }
 
@@ -301,8 +330,8 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
         shopId,
         {
           $pull: {
-            servicesOffered: { _id: serviceId }
-          }
+            servicesOffered: { _id: serviceId },
+          },
         },
         { new: true }
       );
@@ -310,15 +339,14 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Service deleted successfully",
-        shop: updatedShop
+        shop: updatedShop,
       });
     }
 
     return res.status(400).json({
       success: false,
-      message: "Invalid mode. Use add, edit, or delete."
+      message: "Invalid mode. Use add, edit, or delete.",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -327,22 +355,5 @@ router.put("/updateService/:shopId", authMiddleWare, async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 module.exports = router;

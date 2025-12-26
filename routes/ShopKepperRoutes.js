@@ -4,6 +4,8 @@ const express = require("express");
 const router = express.Router();
 const ShopKepper = require("../models/ShopKeeper");
 const ShopDetails = require("../models/ShopDetails");
+const Admin = require("../models/Admin");
+const { createNotification, createBulkNotifications, NotificationMessages } = require("../helpers/notificationHelper");
 
 
 router.delete("/deleteShopKepper/:id", async (req, res) => {
@@ -40,12 +42,32 @@ router.put("/verifyShopKepper/:id", authMiddleWare, async (req, res) => {
         { isVerified: true },
         { new: true }
       );
+
+      // Notify shopkeeper about verification
+      if (shopKepper) {
+        await createNotification(
+          "verification",
+          NotificationMessages.SHOPKEEPER_VERIFIED(),
+          shopKepper._id,
+          shopKepper._id
+        );
+      }
     } else {
       shopKepper = await ShopKepper.findByIdAndUpdate(
         id,
         { isShop: false },
         { new: true }
       );
+
+      // Notify shopkeeper about rejection
+      if (shopKepper) {
+        await createNotification(
+          "rejection",
+          NotificationMessages.SHOPKEEPER_REJECTED(),
+          shopKepper._id,
+          shopKepper._id
+        );
+      }
     }
 
     if (!shopKepper) {

@@ -1,9 +1,15 @@
 const ShopDetails = require("../models/ShopDetails");
 const Requests = require("../models/Request");
 const Worker = require("../models/Worker");
+const User = require("../models/User");
+const ShopKepper = require("../models/ShopKeeper");
 const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
+const {
+  createNotification,
+  NotificationMessages,
+} = require("../helpers/notificationHelper");
 
 router.post("/sendBulkRequests", authMiddleWare, async (req, res) => {
   try {
@@ -20,6 +26,20 @@ router.post("/sendBulkRequests", authMiddleWare, async (req, res) => {
       });
       await newRequest.save();
       saved.push(newRequest);
+
+      // Notify shopkeeper about new request
+      const user = await User.findById(reqData.userId);
+      if (user && shop.owner) {
+        await createNotification(
+          "new_request",
+          NotificationMessages.SHOPKEEPER_NEW_REQUEST(
+            user.name,
+            reqData.category
+          ),
+          shop.owner,
+          newRequest._id
+        );
+      }
     }
 
     res.status(200).json({
@@ -40,17 +60,18 @@ router.get("/getRequests/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const requests = await Requests.find({ shopOwnerId: id , status : { $in: ["pending", "accepted", "rejected"] } })
+    const requests = await Requests.find({
+      shopOwnerId: id,
+      status: { $in: ["pending", "accepted", "rejected"] },
+    })
       .populate("userId", "name phone email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
     if (!requests || requests.length === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "No requests found for this shop owner",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "No requests found for this shop owner",
+      });
     }
 
     res.status(200).json({ success: true, data: requests });
@@ -65,7 +86,7 @@ router.get("/getUserRequests", authMiddleWare, async (req, res) => {
   const id = req.user.id;
 
   try {
-    const request = await Requests.find({ userId : id });
+    const request = await Requests.find({ userId: id });
 
     if (!request || request.length === 0) {
       return res.status(404).json({
@@ -95,7 +116,9 @@ router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
     const order = await Requests.findOneAndDelete({ orderId: id });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order Not Found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order Not Found" });
     }
 
     res.status(200).json({
@@ -110,14 +133,36 @@ router.delete("/deleteRequest/:id", authMiddleWare, async (req, res) => {
 
 router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
-  const {type} = req.body;
+  const { type } = req.body;
   const statusUpdated = type === "accept" ? "accepted" : "rejected";
 
   try {
-    const order = await Requests.findByIdAndUpdate( id ,{status : statusUpdated}, {new :  true});
+    const order = await Requests.findByIdAndUpdate(
+      id,
+      { status: statusUpdated },
+      { new: true }
+    );
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order Not Found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order Not Found" });
+    }
+
+    // Notify user about request status
+    const shop = await ShopDetails.findById(order.shopId);
+    if (shop && order.userId) {
+      const message =
+        type === "accept"
+          ? NotificationMessages.USER_REQUEST_ACCEPTED(shop.shopName)
+          : NotificationMessages.USER_REQUEST_REJECTED(shop.shopName);
+
+      await createNotification(
+        type === "accept" ? "request_accepted" : "request_rejected",
+        message,
+        order.userId,
+        order._id
+      );
     }
 
     res.status(200).json({
@@ -130,7 +175,7 @@ router.put("/updateRequest/:id", authMiddleWare, async (req, res) => {
   }
 });
 router.put("/completeRequest", authMiddleWare, async (req, res) => {
-  const{requests} = req.body;
+  const { requests } = req.body;
   const id = req.user.id;
 
   await Worker.findByIdAndUpdate(id, { isBusy: false }, { new: true });
@@ -138,11 +183,40 @@ router.put("/completeRequest", authMiddleWare, async (req, res) => {
   const completed = [];
   try {
     for (const reqData of requests) {
-      const order = await Requests.findByIdAndUpdate( reqData._id ,{status : "completed"}, {new :  true});
-      completed.push(order)
+      const order = await Requests.findByIdAndUpdate(
+        reqData._id,
+        { status: "completed" },
+        { new: true }
+      );
+      completed.push(order);
+
+      // Notify user about order completion
+      if (order) {
+        const shop = await ShopDetails.findById(order.shopId);
+        if (shop && order.userId) {
+          await createNotification(
+            "order_completed",
+            NotificationMessages.USER_ORDER_COMPLETED(shop.shopName),
+            order.userId,
+            order._id
+          );
+        }
+
+        // Notify shopkeeper about order completion
+        if (shop && shop.owner) {
+          await createNotification(
+            "order_completed",
+            NotificationMessages.SHOPKEEPER_ORDER_COMPLETED(order.orderId),
+            shop.owner,
+            order._id
+          );
+        }
+      }
     }
     if (completed.length === 0) {
-      return res.status(404).json({ success: false, message: "Order Not Found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order Not Found" });
     }
 
     res.status(200).json({
@@ -160,16 +234,18 @@ router.put("/progressRequest", authMiddleWare, async (req, res) => {
 
   try {
     if (!requests || requests.length === 0) {
-      return res.status(400).json({ success: false, message: "No requests provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No requests provided" });
     }
-await Worker.findByIdAndUpdate(
-  id,
-  { 
-    $inc: { orderCount: requests.length }, 
-    $set: { isBusy: true } 
-  },
-  { new: true }
-);
+    await Worker.findByIdAndUpdate(
+      id,
+      {
+        $inc: { orderCount: requests.length },
+        $set: { isBusy: true },
+      },
+      { new: true }
+    );
     const progressedOrders = [];
 
     for (const reqData of requests) {
@@ -182,7 +258,9 @@ await Worker.findByIdAndUpdate(
     }
 
     if (progressedOrders.length === 0) {
-      return res.status(404).json({ success: false, message: "No matching orders found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No matching orders found" });
     }
 
     res.status(200).json({
@@ -195,129 +273,154 @@ await Worker.findByIdAndUpdate(
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-router.put("/markDeleteRequestByShopkeeper/:id", authMiddleWare, async (req, res) => {
-  const { requests, type } = req.body;
-  const { id } = req.params;
-  const workerId = req.user.id;
+router.put(
+  "/markDeleteRequestByShopkeeper/:id",
+  authMiddleWare,
+  async (req, res) => {
+    const { requests, type } = req.body;
+    const { id } = req.params;
+    const workerId = req.user.id;
 
-  try {
-    // Validate
-    if (!requests || requests.length === 0) {
-      return res.status(400).json({ success: false, message: "No requests provided" });
-    }
+    try {
+      // Validate
+      if (!requests || requests.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No requests provided" });
+      }
 
-    // Fetch shop
-    const shop = await ShopDetails.findOne({ owner: id });
-    if (!shop) {
-      return res.status(404).json({ success: false, message: "Shop not found" });
-    }
+      // Fetch shop
+      const shop = await ShopDetails.findOne({ owner: id });
+      if (!shop) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Shop not found" });
+      }
 
-    // Shop blocked?
-    if (shop.isBlocked) {
+      // Shop blocked?
+      if (shop.isBlocked) {
         return res.status(403).json({
           success: false,
           blocked: true,
-          message: "Your shop has been blocked for 7 days due to too many cancellations.",
+          message:
+            "Your shop has been blocked for 7 days due to too many cancellations.",
         });
-    }
+      }
 
-    // Bulk operations array
-    let bulkOps = [];
+      // Bulk operations array
+      let bulkOps = [];
 
-    if (type === "cancel") {
-      // Free worker
-      await Worker.findByIdAndUpdate(workerId, { $set: { isBusy: false },  });
+      if (type === "cancel") {
+        // Free worker
+        await Worker.findByIdAndUpdate(workerId, { $set: { isBusy: false } });
 
-      // Reset assignment + revert to assigned
-      requests.forEach((r) => {
-        bulkOps.push({
-          updateOne: {
-            filter: { _id: r._id },
-            update: {
-              $set: {
-                "orderAssignment.workerId": null,
-                "orderAssignment.assignedAt": null,
-                "orderAssignment.status": "",
-                status: "deleted",
+        // Reset assignment + revert to assigned
+        requests.forEach((r) => {
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: r._id },
+              update: {
+                $set: {
+                  "orderAssignment.workerId": null,
+                  "orderAssignment.assignedAt": null,
+                  "orderAssignment.status": "",
+                  status: "deleted",
+                },
               },
             },
-          },
+          });
         });
-      });
 
-      // Apply updates
-      await Requests.bulkWrite(bulkOps);
+        // Apply updates
+        await Requests.bulkWrite(bulkOps);
 
-      // Update cancel count
-      let updateShop = { $inc: { cancelRequest: 1 } };
-      let newCancelCount = shop.cancelRequest + 1;
+        // Update cancel count
+        let updateShop = { $inc: { cancelRequest: 1 } };
+        let newCancelCount = shop.cancelRequest + 1;
 
-      // Block at >= 5
-      if (newCancelCount >= 5) {
-        updateShop.$set = {
-          isBlocked: true,
-          cancelRequestDate: new Date(),
-        };
-      }
+        // Block at >= 5
+        if (newCancelCount >= 5) {
+          updateShop.$set = {
+            isBlocked: true,
+            cancelRequestDate: new Date(),
+          };
+        }
 
-      const updatedShop = await ShopDetails.findByIdAndUpdate(shop._id, updateShop, { new: true });
+        const updatedShop = await ShopDetails.findByIdAndUpdate(
+          shop._id,
+          updateShop,
+          { new: true }
+        );
 
-      // Warning at 4
-      if (updatedShop.cancelRequest === 4) {
+        // Warning at 4
+        if (updatedShop.cancelRequest === 4) {
+          return res.status(200).json({
+            success: true,
+            warning: true,
+            message:
+              "Warning: 4 orders cancelled. At 5 you will be blocked for 7 days.",
+            currentCount: updatedShop.cancelRequest,
+          });
+        }
+
+        // Blocked response
+        if (updatedShop.isBlocked) {
+          return res.status(403).json({
+            success: false,
+            blocked: true,
+            message:
+              "Your shop has been blocked for 7 days due to too many cancellations.",
+          });
+        }
+
         return res.status(200).json({
           success: true,
-          warning: true,
-          message: "Warning: 4 orders cancelled. At 5 you will be blocked for 7 days.",
-          currentCount: updatedShop.cancelRequest,
+          message: `Orders ${
+            type === "cancel" ? "cancelled" : "deleted"
+          } successfully`,
         });
       }
 
-      // Blocked response
-      if (updatedShop.isBlocked) {
-        return res.status(403).json({
-          success: false,
-          blocked: true,
-          message: "Your shop has been blocked for 7 days due to too many cancellations.",
+      if (type === "delete") {
+        await Requests.updateMany(
+          { _id: { $in: requests.map((r) => r._id) } },
+          {
+            $set: {
+              status: "deleted",
+              "orderAssignment.workerId": null,
+              "orderAssignment.assignedAt": null,
+              "orderAssignment.status": "",
+            },
+          }
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: `Orders ${
+            type === "cancel" ? "cancelled" : "deleted"
+          } successfully`,
         });
       }
 
-      return res.status(200).json({
-        success: true,
-        message: `Orders ${type === "cancel" ? "cancelled" : "deleted"} successfully`,
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid request type" });
+    } catch (error) {
+      console.error("Error in marking orders:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
-
-    if (type === "delete") {
-      await Requests.updateMany(
-        { _id: { $in: requests.map((r) => r._id) }},
-        { $set: { status: "deleted" , "orderAssignment.workerId": null,
-        "orderAssignment.assignedAt": null,
-        "orderAssignment.status": ""} }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: `Orders ${type === "cancel" ? "cancelled" : "deleted"} successfully`,
-      });
-    }
-
-    return res.status(400).json({ success: false, message: "Invalid request type" });
-
-  } catch (error) {
-    console.error("Error in marking orders:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
   }
-});
-
-
-
-
-
+);
 
 router.get("/getAllRequests", authMiddleWare, async (req, res) => {
-
   try {
-    const request = await Requests.find({status : { $in: ["accepted", "rejected","completed","inProgress","deleted"] }});
+    const request = await Requests.find({
+      status: {
+        $in: ["accepted", "rejected", "completed", "inProgress", "deleted"],
+      },
+    });
 
     if (!request || request.length === 0) {
       return res.status(404).json({
@@ -343,14 +446,22 @@ router.get("/getAllRequests", authMiddleWare, async (req, res) => {
 router.put("/markDelete/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
-
   try {
-    const order = await Requests.findByIdAndUpdate( id ,{status : "deleted", "orderAssignment.workerId": null,
-    "orderAssignment.assignedAt": null,
-    "orderAssignment.status": ""}, {new :  true});
+    const order = await Requests.findByIdAndUpdate(
+      id,
+      {
+        status: "deleted",
+        "orderAssignment.workerId": null,
+        "orderAssignment.assignedAt": null,
+        "orderAssignment.status": "",
+      },
+      { new: true }
+    );
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order Not Found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order Not Found" });
     }
 
     res.status(200).json({
@@ -363,14 +474,14 @@ router.put("/markDelete/:id", authMiddleWare, async (req, res) => {
   }
 });
 
-router.delete("/deleteRequests", async(req,res)=>{
+router.delete("/deleteRequests", async (req, res) => {
   try {
     await Requests.deleteMany();
-    res.json({message : "deleted all"})
+    res.json({ message: "deleted all" });
   } catch (error) {
-    res.json({message : "internal server error"})
+    res.json({ message: "internal server error" });
   }
-})
+});
 router.get("/getshopRequest/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
@@ -380,12 +491,10 @@ router.get("/getshopRequest/:id", authMiddleWare, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
     if (!requests || requests.length === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "No requests found for this shop owner",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "No requests found for this shop owner",
+      });
     }
 
     res.status(200).json({ success: true, data: requests });
@@ -400,7 +509,7 @@ router.put("/assignMultiple", async (req, res) => {
 
   try {
     const updates = Object.entries(selectedWorkers).map(([orderId, worker]) => {
-      const workerId = worker._id; 
+      const workerId = worker._id;
 
       return Requests.findByIdAndUpdate(
         orderId,
@@ -409,7 +518,7 @@ router.put("/assignMultiple", async (req, res) => {
             "orderAssignment.workerId": workerId,
             "orderAssignment.assignedAt": new Date(),
             "orderAssignment.status": "assigned",
-            status: "assigned"
+            status: "assigned",
           },
         },
         { new: true }
@@ -432,7 +541,10 @@ router.get("/getAssignedOrder/:id", authMiddleWare, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const requests = await Requests.find({ "orderAssignment.workerId": id, status: { $in: ["assigned", "inProgress"] } })
+    const requests = await Requests.find({
+      "orderAssignment.workerId": id,
+      status: { $in: ["assigned", "inProgress"] },
+    })
       .populate("userId", "name phone email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
@@ -444,7 +556,13 @@ router.get("/getAssignedOrder/:id", authMiddleWare, async (req, res) => {
       });
     }
 
-    res.status(200).json({ success: true, message: "requests found for this worker", data: requests });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "requests found for this worker",
+        data: requests,
+      });
   } catch (error) {
     console.error("Error fetching worker requests:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -481,13 +599,8 @@ router.put("/unAssignOrder/:id", authMiddleWare, async (req, res) => {
     });
   } catch (error) {
     console.error("Error unassigning order:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-
-
 
 module.exports = router;

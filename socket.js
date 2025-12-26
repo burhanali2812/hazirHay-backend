@@ -1,8 +1,13 @@
 const { Server } = require("socket.io");
 const ShopKeeper = require("./models/ShopKeeper");
 const ShopDetails = require("./models/ShopDetails");
+const User = require("./models/User");
+const Worker = require("./models/Worker");
+const Admin = require("./models/Admin");
+const LocalShop = require("./models/LocalShop");
 
 let io;
+const userSockets = new Map(); // Map to store userId -> socketId mappings
 
 const initSocket = (server) => {
   const allowedOrigins = [
@@ -30,6 +35,13 @@ const initSocket = (server) => {
       success: true,
       message: "Test message from server",
     });
+
+    // Register user socket for notifications
+    socket.on("registerUser", (userId) => {
+      userSockets.set(userId, socket.id);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
+    });
+
     // Handle when user sends a request
     socket.on("sendRequestData", async (data) => {
       console.log("Request Data:", data);
@@ -90,6 +102,15 @@ const initSocket = (server) => {
     // Handle when provider disconnects
     socket.on("disconnect", async () => {
       console.log("User Disconnected:", socket.id);
+
+      // Remove from userSockets map
+      for (const [userId, socketId] of userSockets.entries()) {
+        if (socketId === socket.id) {
+          userSockets.delete(userId);
+          break;
+        }
+      }
+
       try {
         await ShopDetails.findOneAndUpdate(
           { socketId: socket.id },
@@ -104,4 +125,13 @@ const initSocket = (server) => {
 
 const getIO = () => io;
 
-module.exports = { initSocket, getIO };
+// Function to emit notification to a specific user
+const emitNotificationToUser = (userId, notification) => {
+  const socketId = userSockets.get(userId);
+  if (socketId && io) {
+    io.to(socketId).emit("newNotification", notification);
+    console.log(`Notification sent to user ${userId}`);
+  }
+};
+
+module.exports = { initSocket, getIO, emitNotificationToUser };

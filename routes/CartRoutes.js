@@ -1,22 +1,24 @@
 const ShopDetails = require("../models/ShopDetails");
-const Cart = require("../models/Cart")
+const Cart = require("../models/Cart");
 const authMiddleWare = require("../authMiddleWare");
 const express = require("express");
 const router = express.Router();
+const {
+  createNotification,
+  NotificationMessages,
+} = require("../helpers/notificationHelper");
 
 router.post("/saveCartData", authMiddleWare, async (req, res) => {
   const { category, subCategory, price, shopName, shopId } = req.body;
-  const userId = req.user.id; 
+  const userId = req.user.id;
 
   try {
-
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-
       cart = new Cart({
         userId,
-        items: [{ category, subCategory, price, shopName, shopId }]
+        items: [{ category, subCategory, price, shopName, shopId }],
       });
     } else {
       cart.items.push({ category, subCategory, price, shopName, shopId });
@@ -24,7 +26,21 @@ router.post("/saveCartData", authMiddleWare, async (req, res) => {
 
     await cart.save();
 
-    res.status(200).json({ success: true, message: "Item saved to cart successfully", cart:cart });
+    // Notify user about item added to cart
+    await createNotification(
+      "cart",
+      NotificationMessages.user.cartItemAdded(`${category} - ${subCategory}`),
+      userId,
+      cart._id
+    );
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Item saved to cart successfully",
+        cart: cart,
+      });
   } catch (error) {
     console.error("Error saving cart:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -35,13 +51,13 @@ router.get("/getCartData", authMiddleWare, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const cart = await Cart.findOne({ userId }); 
-if (!cart) {
-  return res.status(404).json({
-    success: false,
-    message: "Your cart is empty!",
-  });
-}
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Your cart is empty!",
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -62,8 +78,8 @@ router.delete("/deleteCartItem/:itemId", authMiddleWare, async (req, res) => {
 
   try {
     const updatedCart = await Cart.findOneAndUpdate(
-      { userId },  // find cart by userId
-      { $pull: { items: { _id: itemId } } }, 
+      { userId }, // find cart by userId
+      { $pull: { items: { _id: itemId } } },
       { new: true }
     );
 
@@ -106,6 +122,14 @@ router.delete("/deleteUserCart", authMiddleWare, async (req, res) => {
     cart.items = [];
     await cart.save();
 
+    // Notify user about cart cleared
+    await createNotification(
+      "cart",
+      NotificationMessages.user.cartCleared(),
+      userId,
+      cart._id
+    );
+
     res.status(200).json({
       success: true,
       message: "Cart cleared successfully",
@@ -119,11 +143,5 @@ router.delete("/deleteUserCart", authMiddleWare, async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
 
 module.exports = router;

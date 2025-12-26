@@ -5,7 +5,13 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../cloudinaryConfig");
 const bcrypt = require("bcryptjs");
 const LocalShop = require("../models/LocalShop");
+const Admin = require("../models/Admin");
 const authMiddleWare = require("../authMiddleWare");
+const {
+  createNotification,
+  createBulkNotifications,
+  NotificationMessages,
+} = require("../helpers/notificationHelper");
 
 // Cloudinary storage
 const storage = new CloudinaryStorage({
@@ -123,6 +129,24 @@ router.post(
 
       await newShop.save();
 
+      // Send notification to local shop owner
+      await createNotification(
+        "registration",
+        NotificationMessages.LOCALSHOP_SIGNUP(shopName),
+        newShop._id,
+        newShop._id
+      );
+
+      // Notify all admins about new local shop request
+      const admins = await Admin.find();
+      const adminNotifications = admins.map((admin) => ({
+        type: "new_request",
+        message: NotificationMessages.ADMIN_NEW_LOCALSHOP_REQUEST(shopName),
+        userId: admin._id,
+        checkoutId: newShop._id,
+      }));
+      await createBulkNotifications(adminNotifications);
+
       return res
         .status(201)
         .json({ message: "Shop saved successfully!", shop: newShop });
@@ -147,7 +171,7 @@ router.get(
           .json({ success: false, message: "Access Denied" });
       }
       let query = {
-        isVerified: false,
+        isVerified: true,
         category,
       };
 
@@ -247,19 +271,37 @@ router.put("/verifyLocalShop/:id", authMiddleWare, async (req, res) => {
           .json({ success: false, message: "Shop not found" });
       }
 
+      // Notify local shop about verification
+      await createNotification(
+        "verification",
+        NotificationMessages.LOCALSHOP_VERIFIED(shop.shopName),
+        shop._id,
+        shop._id
+      );
+
       res.status(200).json({
         success: true,
         message: "Local shop verified successfully",
         data: shop,
       });
     } else if (action === "decline") {
-      const shop = await LocalShop.findByIdAndDelete(id);
+      const shop = await LocalShop.findById(id);
 
       if (!shop) {
         return res
           .status(404)
           .json({ success: false, message: "Shop not found" });
       }
+
+      // Notify local shop about rejection before deletion
+      await createNotification(
+        "rejection",
+        NotificationMessages.LOCALSHOP_REJECTED(shop.shopName),
+        shop._id,
+        shop._id
+      );
+
+      await LocalShop.findByIdAndDelete(id);
 
       res.status(200).json({
         success: true,
