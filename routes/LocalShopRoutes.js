@@ -158,12 +158,11 @@ router.post(
 );
 
 router.get(
-  "/getAllVerifiedLiveLocalShops/:category",
+  "/getAllVerifiedLiveLocalShops",
   authMiddleWare,
   async (req, res) => {
     try {
-      const { category } = req.params;
-      const { type, name } = req.query;
+      const { category, type, name } = req.query;
 
       if (req.user.role !== "user") {
         return res
@@ -179,8 +178,7 @@ router.get(
         query.shopName = name;
       } else if (type === "services" && name) {
         query["services.name"] = name;
-      }
-      else {
+      } else {
         query.category = name;
       }
 
