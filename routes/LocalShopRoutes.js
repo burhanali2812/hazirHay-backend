@@ -181,7 +181,7 @@ router.get(
         query["services.name"] = name;
       }
       else {
-        query.category = category;
+        query.category = name;
       }
 
       const shops = await LocalShop.find(query).select("-paymentPic -password");
