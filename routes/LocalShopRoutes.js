@@ -180,6 +180,9 @@ router.get(
       } else if (type === "services" && name) {
         query["services.name"] = name;
       }
+      else {
+        query.category = category;
+      }
 
       const shops = await LocalShop.find(query).select("-paymentPic -password");
 
