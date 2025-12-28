@@ -178,7 +178,7 @@ router.get(
         query.shopName = name;
       } else if (type === "services" && name) {
         query["services.name"] = name;
-      } else {
+      } else if(type === "Quick Access") {
         query.category = name;
       }
       console.log("Query:", query);
