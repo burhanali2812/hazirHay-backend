@@ -181,6 +181,7 @@ router.get(
       } else {
         query.category = name;
       }
+      console.log("Query:", query);
 
       const shops = await LocalShop.find(query).select("-paymentPic -password");
 
