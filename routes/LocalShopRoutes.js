@@ -321,9 +321,9 @@ router.put("/verifyLocalShop/:id", authMiddleWare, async (req, res) => {
   }
 });
 
-router.get("/unique-shopnames/:category", async (req, res) => {
+router.get("/unique-shopnames", async (req, res) => {
   try {
-    const { category } = req.params;
+    const { category } = req.query;
 
     const shopNames = await LocalShop.distinct("shopName", { category });
 
@@ -337,9 +337,9 @@ router.get("/unique-shopnames/:category", async (req, res) => {
   }
 });
 
-router.get("/unique-services/:category", async (req, res) => {
+router.get("/unique-services", async (req, res) => {
   try {
-    const { category } = req.params;
+    const { category } = req.query;
 
     const services = await LocalShop.distinct("services.name", { category });
 
