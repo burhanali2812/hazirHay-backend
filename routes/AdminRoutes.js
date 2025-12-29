@@ -216,7 +216,7 @@ if (shopwithkepperExist) {
 
 router.post("/", async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role , formate} = req.body;
 
     const SECRET = "^@@@@@^";
 
@@ -234,13 +234,15 @@ router.post("/", async (req, res) => {
     const { model, label } = roleData;
 
   
-    const finalUser = upRole === "worker" ? "phone" : "email";
+    let finalUser = "email";
+    if (formate === "phone") {
+      finalUser = "phone";
+    }
 
 
-    const query = {
-      [finalUser]: cleanEmail,
-      role: upRole
-    };
+
+    const query = finalUser === "email" ? { email: cleanEmail, role: upRole } : { phone: cleanEmail, role: upRole };
+
 
     const account = await model.findOne(query);
 
