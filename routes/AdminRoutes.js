@@ -48,7 +48,7 @@ router.post(
           .json({ success: false, message: "Invalid role provided" });
       }
 
-      const alreadyExist = await roleData.model.findOne({ email });
+      const alreadyExist = await roleData.model.findOne({ email , role , phone });
       if (alreadyExist) {
         return res
           .status(400)

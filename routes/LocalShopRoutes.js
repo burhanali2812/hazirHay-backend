@@ -37,7 +37,6 @@ router.post(
         shopName,
         position,
         shopAddress,
-        email,
         category,
         password,
         phone,
@@ -51,7 +50,6 @@ router.post(
         !shopName ||
         !position ||
         !shopAddress ||
-        !email ||
         !password ||
         !phone ||
         !location ||
@@ -63,10 +61,10 @@ router.post(
           .json({ message: "All required fields must be provided." });
       }
 
-      // Check if email exists
-      const existingShop = await LocalShop.findOne({ email });
+      // Check if phone exists
+      const existingShop = await LocalShop.findOne({ phone });
       if (existingShop) {
-        return res.status(400).json({ message: "Email already registered." });
+        return res.status(400).json({ message: "Phone number already registered." });
       }
 
       // Hash password
