@@ -118,7 +118,6 @@ router.post(
         shopPicture: shopPictureUrl,
         paymentPic: paymentPicUrl,
         category,
-        email,
         password: hashedPassword,
         phone,
         services: parsedServices,
@@ -359,7 +358,7 @@ router.get("/getShopData", authMiddleWare, async (req, res) => {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
-    // Fetch by ID instead of email
+
     const shop = await LocalShop.findById(req.user.id).select(
       "-password -paymentPic"
     );
@@ -389,7 +388,7 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
-    const { shopName, position, description, shopAddress, phone, email } =
+    const { shopName, position, description, shopAddress, phone, } =
       req.body;
 
     // Fetch by ID (correct)
@@ -401,13 +400,13 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
         .json({ success: false, message: "Shop not found" });
     }
 
-    // Email change → must check uniqueness
-    if (email && email !== shop.email) {
-      const existingShop = await LocalShop.findOne({ email });
+    // Phone change → must check uniqueness
+    if (phone && phone !== shop.phone) {
+      const existingShop = await LocalShop.findOne({ phone });
       if (existingShop) {
         return res
           .status(400)
-          .json({ success: false, message: "Email already in use" });
+          .json({ success: false, message: "Phone number already in use" });
       }
     }
 
@@ -418,7 +417,6 @@ router.put("/updateShopInfo", authMiddleWare, async (req, res) => {
     if (description) updateData.description = description;
     if (shopAddress) updateData.shopAddress = shopAddress;
     if (phone) updateData.phone = phone;
-    if (email && email !== shop.email) updateData.email = email;
 
     // Update WITHOUT validation
     const updatedShop = await LocalShop.findByIdAndUpdate(
